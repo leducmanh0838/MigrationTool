@@ -39,6 +39,7 @@ class EntityMigrationMapper:
                 value = func(**params)
 
             target_data[target_field] = value
+        target_data = mapper_utils.unflatten_json(target_data)
         return target_data
 
     def validate_record(self, source_record, context=None):

@@ -64,7 +64,7 @@ if __name__ == "__main__":
                                          WordPressConfig.PASSWORD)
     service = MigrationService(
         # schema_mapper=schema_manager,
-        migration_path=['category', 'product'],
+        migration_path=['category', 'product', 'customer'],
         # migration_path=['product'],
         read_connector=magento_connector,
         write_connector=woo_connector,

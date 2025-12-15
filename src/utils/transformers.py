@@ -1,4 +1,4 @@
-# /src/utils/common_transformers.py
+# /src/utils/transformers.py
 import json
 
 from config.settings import YamlValueConfig
@@ -76,3 +76,9 @@ def transform_magento_value(value: int, source_platform: str,
             target_platform)
     except Exception:
         return default_value
+
+def null_to_empty_string(value) -> str:
+    print("null_to_empty_string")
+    if value is None:
+        return ""
+    return value
