@@ -1,4 +1,4 @@
-# magento_data_mappings.yaml
+# product.yaml
 
 status:
   # Magento Status Code 1 (Enabled)
@@ -42,10 +42,10 @@ visibility:
 
   # 2: Chỉ Search (Gần như ẩn, trừ khi người dùng biết tìm kiếm)
   2:
-    woo: hidden              # Thiết lập sản phẩm ẩn/draft
+    woo: visible              # hidden
     medusa: draft
 
   # 1: Không hiển thị riêng lẻ (Dùng cho sản phẩm con)
   1:
-    woo: hidden              # Thiết lập sản phẩm ẩn/draft
+    woo: visible              # hidden
     medusa: draft

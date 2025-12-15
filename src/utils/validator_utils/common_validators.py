@@ -19,6 +19,11 @@ def not_null(value, **kwargs):
     return True
 
 
+def is_not_self_referencing(parent_id, current_id):
+    print("is_not_self_referencing")
+    return parent_id != current_id
+
+
 # --- VALIDATORS CHO CHUỖI (String) ---
 
 def is_string_min_length(value, min_length, **kwargs):

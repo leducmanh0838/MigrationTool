@@ -9,7 +9,7 @@ WOO_SECRET = "oVvY wL2n XrIs 27ke VJug HVhJ"
 
 # --- THÔNG TIN CẦN THAY ĐỔI ---
 PRODUCT_ID = 99  # Thay bằng ID sản phẩm thực tế của bạn
-IMAGE_FILE_PATH = "./image.jpg"  # Thay bằng đường dẫn đến file ảnh cục bộ
+IMAGE_FILE_PATH = "image.jpg"  # Thay bằng đường dẫn đến file ảnh cục bộ
 
 
 # --- 1. Tải ảnh lên WordPress Media (Sử dụng requests) ---

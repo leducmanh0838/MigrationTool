@@ -1,0 +1,54 @@
+source: magento
+target: woocommerce
+entity: category
+description: Mapping definition from Magento Category structure to WooCommerce Category structure.
+
+fields:
+  # Trường đích (Woo) : JMESPath Query (Magento)
+  name: name
+  parent: parent_id
+  menu_order: position
+
+  # Sử dụng JMESPath để trích xuất giá trị từ mảng custom_attributes
+  children_count: custom_attributes[?attribute_code == 'children_count'].value | [0]
+
+validators:
+  # Yêu cầu tên không rỗng, nếu không thì bỏ qua bản ghi
+  name:
+    - type: function
+      function_name: not_null
+      params:
+        value: $SOURCE_VALUE
+      on_fail: skip_record
+
+  # Kiểm tra Parent ID không được trỏ ngược về ID của chính nó
+  parent:
+    - type: function
+      function_name: is_not_self_referencing
+      params:
+        # parent_id đã được truyền vào vị trí 1
+        # Lấy ID hiện tại của Category (bằng JMESPath)
+        parent_id: $SOURCE_VALUE
+        current_id: $QUERY.id
+      on_fail: set_to_default
+      default_value: 0
+
+transformations:
+  parent:
+    - type: function
+      function_name: map_id_to_target
+      params:
+        entity: category
+        source_id: $SOURCE_VALUE
+        context: $CONTEXT
+
+post_processors:
+  - type: function
+    function_name: save_id_mapping
+    params:
+      created_target_record: $CREATED_TARGET_RECORD
+      source_record: $SOURCE_RECORD
+      source_id_field: id
+      target_id_field: id
+      entity: category
+      context: $CONTEXT

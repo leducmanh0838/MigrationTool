@@ -32,22 +32,12 @@ class MagentoConnector(ReadBaseConnector):
         """
         Hàm Generator để lấy TOÀN BỘ sản phẩm (tự động loop qua các trang)
         """
-        current_page = 1
-        products = []
-        while True:
-            data = self.get_products(page=current_page, page_size=page_size)
-            if not data or not data.get('items'):
-                break
+        endpoint = "products"
+        params = {
+            "searchCriteria[pageSize]": 0,  # lấy hết
+        }
 
-            for item in data['items']:
-                products.append(item)
-
-            # Kiểm tra xem đã hết trang chưa
-            if len(data['items']) < page_size:
-                break
-
-            current_page += 1
-        return products
+        return self._make_request("GET", endpoint, params=params).get("items")
 
     def get_all_categories(self):
         """

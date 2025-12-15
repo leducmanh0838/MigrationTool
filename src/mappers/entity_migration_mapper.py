@@ -1,6 +1,10 @@
+import json
 from typing import Dict, Any
 
-from config.yaml_configs import VALIDATOR_FUNCTIONS
+import jmespath
+
+from config.settings import YamlValueConfig
+from config.yaml_configs import VALIDATOR_FUNCTIONS, TRANSFORMER_FUNCTIONS, POST_PROCESSOR_FUNCTIONS
 from src.utils import mapper_utils
 
 
@@ -10,70 +14,50 @@ class EntityMigrationMapper:
         self.target = target
         self.entity = entity
 
-        self.mapping_config = mapper_utils.get_mapping_config(source, target, entity)
+        self.mapping_config = YamlValueConfig.YAML_MAPPINGS.get(source).get(target).get(entity)
         self.field_mappings = self.mapping_config.get('fields', {})
         self.transformations_config = self.mapping_config.get('transformations', {})
-        self.special_transformations_config = self.mapping_config.get('special_transformations', {})
+        # self.special_transformations_config = self.mapping_config.get('special_transformations', {})
         self.validators_config = self.mapping_config.get('validators', {})
         self.post_processors_config = self.mapping_config.get('post_processors', {})
-        # ID Map: {Magento_ID: Woo_ID}
-        # self.id_map = {}
 
-    # def add_id_map(self, magento_id, woo_id):
-    #     self.id_map[magento_id] = woo_id
-
-    def to_target(self, source_data: Dict[str, Any], global_context) -> Dict[str, Any]:
-        """Thực hiện ánh xạ động Category."""
+    def to_record_target(self, source_record: Dict[str, Any], context=None) -> Dict[str, Any]:
         target_data: Dict[str, Any] = {}
+        print('source_data: ', json.dumps(source_record, indent=4))
 
-        # Ánh xạ các trường từ YAML
-        for source_field, target_field in self.field_mappings.items():
-            value = source_data.get(source_field)
-            field_transformations = self.transformations_config.get(source_field)
-            if field_transformations:
-                value = mapper_utils.apply_transformations(value, field_transformations, global_context)
+        for target_field, jmes_query in self.field_mappings.items():
+            # print("target_field: ", target_field)
+            # Thực thi JMESPath Query
+            value = jmespath.search(jmes_query, source_record)
+            func_configs = self.transformations_config.get(target_field, {})
+            for func_config in func_configs:
+                params = mapper_utils.resolve_dynamic_params(func_config=func_config, source_value=value,
+                                                             source_record=source_record,
+                                                             context=context)
+                func = mapper_utils.get_func_by_func_config(func_config, TRANSFORMER_FUNCTIONS)
+                # print("params: ", params)
+                value = func(**params)
+
             target_data[target_field] = value
-
-        mapper_utils.transform_special_field(source_data, target_data, self.special_transformations_config)
         return target_data
 
-    def validate_record(self, source_record):
-        """
-        Thực hiện xác thực trên một bản ghi dữ liệu nguồn (Magento).
-
-        :param source_record: Dict chứa dữ liệu bản ghi, ví dụ: {'parent_id': '10', 'name': 'Áo', 'position': '1'}
-        :return: (Boolean, dict) - (Có hợp lệ không, Bản ghi đã được điều chỉnh/xử lý)
-        """
-        processed_record = source_record.copy()
-
-        for source_field, rules in self.validators_config.items():
-            value = processed_record.get(source_field)
-
-            for rule in rules:
-                function_name = rule['function_name']
-                on_fail = rule.get('on_fail')
-                params = rule.get('params', {})
-                default_value = rule.get('default_value')  # Chỉ dùng cho set_to_default
-
-                # 1. Lấy hàm Python tương ứng
-                validator_func = VALIDATOR_FUNCTIONS.get(function_name)
-                if not validator_func:
-                    print(f"Lỗi: Không tìm thấy hàm xác thực '{function_name}'")
-                    continue
-
-                # 2. Thực thi hàm xác thực
-                # is_valid, error_message = validator_func(value, **params)
-                is_valid = validator_func(value, **params)
-
-                # 3. Xử lý khi xác thực THẤT BẠI
+    def validate_record(self, source_record, context=None):
+        for source_field, func_configs in self.validators_config.items():
+            source_value = source_record.get(source_field)
+            for func_config in func_configs:
+                params = mapper_utils.resolve_dynamic_params(func_config, source_value, source_record, context)
+                on_fail = func_config.get('on_fail')
+                default_value = func_config.get('default_value')
+                func = mapper_utils.get_func_by_func_config(func_config, VALIDATOR_FUNCTIONS)
+                is_valid = func(**params)
                 if not is_valid:
                     print(
-                        f"Xác thực thất bại cho trường '{source_field}' với quy tắc '{function_name}'. Lỗi")
+                        f"Xác thực thất bại cho trường '{source_field}' với quy tắc '{func_config.get('function_name')}'. Lỗi")
 
                     if on_fail == 'skip_record':
                         # Bỏ qua toàn bộ bản ghi này
                         print("Hành động: Bỏ qua bản ghi.")
-                        return False, processed_record
+                        return False, source_record
 
                     elif on_fail == 'log_warning':
                         # Chỉ ghi log cảnh báo và tiếp tục
@@ -83,7 +67,7 @@ class EntityMigrationMapper:
                     elif on_fail == 'set_to_default':
                         # Đặt lại giá trị của trường về giá trị mặc định
                         print(f"Hành động: Đặt giá trị mặc định '{default_value}'.")
-                        processed_record[source_field] = default_value
+                        source_record[source_field] = default_value
                         value = default_value  # Cập nhật giá trị để các quy tắc sau sử dụng giá trị mới
                         # Vẫn cần kiểm tra lại (Tùy logic: một số người sẽ dừng và coi giá trị mới là hợp lệ,
                         # một số sẽ tiếp tục chạy các quy tắc khác trên giá trị mặc định)
@@ -93,15 +77,33 @@ class EntityMigrationMapper:
                         max_value = params.get('max_value')
                         if max_value is not None:
                             print(f"Hành động: Cắt bớt giá trị về {max_value}.")
-                            processed_record[source_field] = max_value
+                            source_record[source_field] = max_value
                             value = max_value
                         else:
                             print("Lỗi: 'truncate_value' được gọi nhưng không có 'max_value'.")
+        return True, source_record
 
-                    # ... có thể thêm các hành động on_fail khác (ví dụ: raise_exception)
+    def post_process(self, source_record=None, created_target_record=None, context=None):
+        # mapper_utils.post_process_util(self.post_processors_config, global_context=global_context)
+        for func_config in self.post_processors_config:
+            params = mapper_utils.resolve_dynamic_params(func_config=func_config,
+                                                         source_record=source_record,
+                                                         created_target_record=created_target_record,
+                                                         context=context)
+            func = mapper_utils.get_func_by_func_config(func_config, POST_PROCESSOR_FUNCTIONS)
+            func(**params)
 
-        # 4. Nếu vượt qua tất cả các xác thực (hoặc đã được xử lý), trả về True
-        return True, processed_record
 
-    def post_process(self, global_context):
-        mapper_utils.post_process_util(self.post_processors_config, global_context=global_context)
+if __name__ == "__main__":
+    magento_test_data = {
+        "id": 2,
+        "parent_id": 0,
+        "name": "Men's Clothing",
+        "position": 1,
+        "custom_attributes": [{"attribute_code": "children_count", "value": "10"}],
+    }
+
+    migration = EntityMigrationMapper("magento", "woo", "category")
+    valid = migration.validate_record(magento_test_data, None)
+    target_data = migration.to_record_target(magento_test_data, None)
+    print(json.dumps(target_data, indent=4))

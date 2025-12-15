@@ -1,6 +1,11 @@
+import json
 import os
+
+import yaml
 from dotenv import load_dotenv
 from pathlib import Path
+
+from src.utils import setting_utils
 
 # Tải các biến môi trường từ file .env (nếu có)
 # Việc này nên được gọi một lần khi ứng dụng khởi động
@@ -21,7 +26,7 @@ class AppConfig:
     VERIFY_SSL = not DEBUG_MODE  # True nếu không phải DEBUG_MODE (tức là True khi PROD)
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
     YAML_MAPPINGS_DIR = PROJECT_ROOT / 'config' / 'yaml_mappings'
-    YAML_CONFIG_DIR = PROJECT_ROOT / 'config' / 'yaml_transformation_configs'
+    YAML_TRANSFORMATION_CONFIGS_DIR = PROJECT_ROOT / 'config' / 'yaml_transformation_configs'
     # module_name = f"src.utils.data_transformers"
     DATA_TRANSFORMER_PATH = 'src.mappers.data_mappers.data_transformers'
     DATA_VALIDATORS_PATH = 'src.mappers.data_mappers.data_validators'
@@ -35,10 +40,6 @@ class MagentoConfig:
     # Token xác thực quản trị (Admin Token)
     ACCESS_TOKEN = os.getenv("MAGENTO_ACCESS_TOKEN")
 
-    # @staticmethod
-    # def is_api_configured():
-    #     return all([MagentoConfig.BASE_URL, MagentoConfig.ACCESS_TOKEN])
-
 
 # --- CẤU HÌNH WOOCOMMERCE (TARGET) ---
 class WooCommerceConfig:
@@ -48,12 +49,6 @@ class WooCommerceConfig:
     # Key và Secret để xác thực qua OAuth 1.0a
     CONSUMER_KEY = os.getenv("WOO_CONSUMER_KEY")
     CONSUMER_SECRET = os.getenv("WOO_CONSUMER_SECRET")
-
-    # @staticmethod
-    # def is_api_configured():
-    #     return all([WooCommerceConfig.BASE_URL,
-    #                 WooCommerceConfig.CONSUMER_KEY,
-    #                 WooCommerceConfig.CONSUMER_SECRET])
 
 
 # --- CẤU HÌNH WOOCOMMERCE (TARGET) ---
@@ -66,18 +61,13 @@ class WordPressConfig:
     PASSWORD = os.getenv("WORD_PRESS_PASSWORD")
 
 
-# --- CẤU HÌNH CHUNG KHÁC ---
-# class AppConfig:
-#     # Các cài đặt chung của ứng dụng (ví dụ: cấp độ logging)
-#     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-#
-#     # Timeout cho các cuộc gọi API (giây)
-#     API_TIMEOUT = int(os.getenv("API_TIMEOUT", 30))
+class YamlValueConfig:
+    YAML_MAPPINGS = {}
+    YAML_TRANSFORMATION_CONFIGS = {}
+    setting_utils.load_yaml_mappings(AppConfig.YAML_MAPPINGS_DIR, YAML_MAPPINGS)
+    setting_utils.load_yaml_mappings(AppConfig.YAML_TRANSFORMATION_CONFIGS_DIR, YAML_TRANSFORMATION_CONFIGS)
+    # with open(AppConfig.YAML_CONFIG_DIR / "product.yaml", 'r', encoding='utf-8') as f:
+    #     MAGENTO_DATA_MAPPINGS = yaml.safe_load(f)
 
 
-# --- Kiểm tra cấu hình khi khởi động (Tùy chọn) ---
-# if not MagentoConfig.is_api_configured():
-#     print("CẢNH BÁO: Cấu hình API Magento chưa đầy đủ. Kiểm tra file .env")
-#
-# if not WooCommerceConfig.is_api_configured():
-#     print("CẢNH BÁO: Cấu hình API WooCommerce chưa đầy đủ. Kiểm tra file .env")
+# print(json.dumps(YamlValueConfig.YAML_TRANSFORMATION_CONFIGS, indent=4))
