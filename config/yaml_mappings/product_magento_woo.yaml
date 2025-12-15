@@ -1,0 +1,61 @@
+# /config/yaml_mappings/product_magento_woo.yaml
+source: magento
+target: woocommerce
+entity: product
+description: Mapping definition from Magento Product structure to WooCommerce Product structure.
+
+fields:
+  # Trường nguồn (Magento) : Trường đích (WooCommerce)
+#  Thông tin cơ bản:
+  sku: sku
+  name: name
+  type_id: type
+  status: status
+  short_description: short_description
+  visibility: catalog_visibility
+
+#  Giá cả
+  price: regular_price
+  special_price: sale_price
+#  is_in_stock: stock_status
+#  status: status
+
+attribute_code_fields:
+  custom_attributes:
+    category_ids: categories
+    description: description
+
+
+transformations:
+#  Thông tin cơ bản
+  name:
+    - type: function
+      function_name: normalize_string_mapper
+  type_id:
+    - type: function
+      function_name: transform_magento_value
+      params:
+        target_platform: woo
+        default_value: simple
+        _mapping_ref: type_id
+  status:
+    - type: function
+      function_name: transform_magento_value
+      params:
+        target_platform: woo
+        default_value: draft
+        _mapping_ref: status
+  visibility:
+    - type: function
+      function_name: transform_magento_value
+      params:
+        target_platform: woo
+        default_value: visible
+        _mapping_ref: visibility
+# Giá cả
+  price:
+    - type: function
+      function_name: normalize_string_mapper
+  special_price:
+    - type: function
+      function_name: normalize_string_mapper

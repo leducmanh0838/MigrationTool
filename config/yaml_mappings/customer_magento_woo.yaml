@@ -1,0 +1,26 @@
+# /config/yaml_mappings/product_magento_woo.yaml
+source: magento
+target: customer
+entity: product
+description: Mapping definition from Magento Customer structure to WooCommerce Product structure.
+
+fields:
+  # Trường nguồn (Magento) : Trường đích (WooCommerce)
+  email: email
+  firstname: first_name
+  lastname: last_name
+
+post_processors:
+  - type: function
+    function_name: send_reset_password_email
+
+special_transformations:
+  - type: function
+    function_name: map_magento_addresses_to_woo_objects
+
+validators:
+  # Quy tắc cho trường 'name' (Tên danh mục)
+  email:
+    - type: function
+      function_name: is_valid_email
+      on_fail: skip_record
