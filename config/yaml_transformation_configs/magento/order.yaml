@@ -1,0 +1,87 @@
+# order.yaml
+
+# ==============================================================================
+# 1. ÁNH XẠ TRẠNG THÁI ĐƠN HÀNG (STATUS)
+# ==============================================================================
+status:
+  # Trạng thái chờ xử lý thanh toán
+  pending:
+    woo: pending
+  pending_payment:
+    woo: pending
+
+  # Đơn hàng đang bị giữ lại/cần xem xét
+  payment_review:
+    woo: on-hold
+  holded:
+    woo: on-hold
+
+  # Đơn hàng đang được xử lý
+  processing:
+    woo: processing
+
+  # Đơn hàng đã hoàn thành
+  complete:
+    woo: completed
+
+  # Đơn hàng bị đóng (thường là sau khi hoàn tiền hoặc kết thúc chu kỳ)
+  closed:
+    woo: completed # Có thể ánh xạ sang refunded nếu logic migrate xác định có hoàn tiền
+
+  # Đơn hàng bị hủy hoặc thất bại
+  canceled:
+    woo: cancelled
+  suspected_fraud:
+    woo: failed # Hoặc cancelled tùy theo logic kinh doanh của bạn
+
+# ==============================================================================
+# 2. ÁNH XẠ PHƯƠNG THỨC THANH TOÁN (PAYMENT METHOD)
+# WooCommerce yêu cầu 'payment_method' (key) và 'payment_method_title' (title)
+# Ánh xạ này giúp chuẩn hóa 'payment_method' key
+# ==============================================================================
+payment_method:
+  # Magento key 'checkmo' (Check / Money order)
+  checkmo:
+    woo: bacs # Dùng mã chuẩn cho Bank Transfer
+    title: 'Direct Bank Transfer'
+
+  # Magento key 'cashondelivery' (Thanh toán khi nhận hàng)
+  cashondelivery:
+    woo: cod
+    title: 'Cash on Delivery'
+
+  # Magento key 'paypal_express'
+  paypal_express:
+    woo: paypal
+    title: 'PayPal Express Checkout'
+
+  # Các phương thức khác...
+  banktransfer:
+    woo: bacs
+    title: 'Bank Transfer'
+
+# ==============================================================================
+# 3. ÁNH XẠ PHƯƠNG THỨC VẬN CHUYỂN (SHIPPING METHOD)
+# Magento dùng 'carrier_method', ví dụ: 'flatrate_flatrate'
+# WooCommerce dùng 'method_id' (key) và 'method_title' (title)
+# ==============================================================================
+shipping_method:
+  # Magento Flat Rate
+  flatrate_flatrate:
+    woo: flat_rate
+    title: 'Flat Rate'
+
+  # Magento Free Shipping
+  freeshipping_freeshipping:
+    woo: free_shipping
+    title: 'Free Shipping'
+
+  # Magento Table Rate
+  tablerate_bestway:
+    woo: table_rate # Tùy thuộc vào plugin Woo tương ứng
+    title: 'Table Rate (Best Way)'
+
+  # Magento UPS, Fedex, v.v. (Tùy thuộc vào Integration)
+  # usps_express:
+  #   woo: usps_express
+  #   title: 'USPS Express'

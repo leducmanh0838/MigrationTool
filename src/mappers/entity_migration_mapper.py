@@ -9,17 +9,21 @@ from src.utils import mapper_utils
 
 
 class EntityMigrationMapper:
-    def __init__(self, source: str, target: str, entity: str):
-        self.source = source
-        self.target = target
-        self.entity = entity
-
-        self.mapping_config = YamlValueConfig.YAML_MAPPINGS.get(source).get(target).get(entity)
-        self.field_mappings = self.mapping_config.get('fields', {})
-        self.transformations_config = self.mapping_config.get('transformations', {})
-        # self.special_transformations_config = self.mapping_config.get('special_transformations', {})
-        self.validators_config = self.mapping_config.get('validators', {})
-        self.post_processors_config = self.mapping_config.get('post_processors', {})
+    def __init__(self, source: str, target: str, entity: str, field_parts=None):
+        # self.source = source
+        # self.target = target
+        # self.entity = entity
+        mapping_config = YamlValueConfig.YAML_MAPPINGS.get(source).get(target).get(entity)
+        if field_parts is None:
+            mapping_config = mapping_config.get(entity)
+        else:
+            for field_part in field_parts:
+                mapping_config = mapping_config.get(field_part)
+        self.field_mappings = mapping_config.get('fields', {})
+        self.transformations_config = mapping_config.get('transformations', {})
+        # self.special_transformations_config = mapping_config.get('special_transformations', {})
+        self.validators_config = mapping_config.get('validators', {})
+        self.post_processors_config = mapping_config.get('post_processors', {})
 
     def to_record_target(self, source_record: Dict[str, Any], context=None) -> Dict[str, Any]:
         target_data: Dict[str, Any] = {}
@@ -29,6 +33,8 @@ class EntityMigrationMapper:
             # print("target_field: ", target_field)
             # Thực thi JMESPath Query
             value = jmespath.search(jmes_query, source_record)
+            if value is None:
+                continue
             func_configs = self.transformations_config.get(target_field, {})
             for func_config in func_configs:
                 params = mapper_utils.resolve_dynamic_params(func_config=func_config, source_value=value,
@@ -39,6 +45,8 @@ class EntityMigrationMapper:
                 value = func(**params)
 
             target_data[target_field] = value
+        # print('target_data before unflatten_json: ', json.dumps(target_data, indent=4))
+        # print('END target_data before unflatten_json: ')
         target_data = mapper_utils.unflatten_json(target_data)
         return target_data
 
@@ -104,7 +112,8 @@ if __name__ == "__main__":
         "custom_attributes": [{"attribute_code": "children_count", "value": "10"}],
     }
 
-    migration = EntityMigrationMapper("magento", "woo", "category")
+    migration = EntityMigrationMapper("magento", "woo", "category", ["abc"])
     valid = migration.validate_record(magento_test_data, None)
     target_data = migration.to_record_target(magento_test_data, None)
-    print(json.dumps(target_data, indent=4))
+    print('migration.field_mappings', json.dumps(migration.field_mappings, indent=4))
+    print('migration.transformations_config', json.dumps(migration.transformations_config, indent=4))

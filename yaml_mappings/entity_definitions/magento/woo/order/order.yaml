@@ -1,0 +1,88 @@
+source: magento
+target: woocommerce
+entity: order
+description: Mapping definition from Magento Order structure to WooCommerce Order structure.
+
+fields:
+  # === 1. THÔNG TIN CƠ BẢN VÀ TRẠNG THÁI ===
+  # customer_id: Cần ánh xạ riêng sau khi migrate Customer
+  # customer_id: customer_id  # Dùng khi Magento Order có customer_id hợp lệ
+
+  parent_id: '"0"'
+
+  status: status # Trạng thái cần được chuyển đổi (xem phần Transformations)
+
+  date_created: created_at
+
+  order_key: increment_id # Magento Increment ID thường được dùng làm khóa tham chiếu
+
+  payment_method: payment.method
+  payment_method_title: payment.method_title
+
+  # === 2. THÔNG TIN ĐỊA CHỈ (BILLING & SHIPPING) ===
+  # Magento Order API trả về địa chỉ trực tiếp, không phức tạp như Customer API
+
+  # Billing Address
+  billing.first_name: billing_address.firstname
+  billing.last_name: billing_address.lastname
+  billing.company: billing_address.company
+  billing.address_1: billing_address.street | [0]
+  billing.address_2: billing_address.street | [1]
+  billing.city: billing_address.city
+  billing.state: billing_address.region
+  billing.postcode: billing_address.postcode
+  billing.country: billing_address.country_id
+  billing.email: billing_address.email
+  billing.phone: billing_address.telephone
+
+  # Shipping Address
+  shipping.first_name: extension_attributes.shipping_assignments[0].shipping.address.firstname
+  shipping.last_name: extension_attributes.shipping_assignments[0].shipping.address.lastname
+  shipping.company: extension_attributes.shipping_assignments[0].shipping.address.company
+  shipping.address_1: extension_attributes.shipping_assignments[0].shipping.address.street | [0]
+  shipping.address_2: extension_attributes.shipping_assignments[0].shipping.address.street | [1]
+  shipping.city: extension_attributes.shipping_assignments[0].shipping.address.city
+  shipping.state: extension_attributes.shipping_assignments[0].shipping.address.region
+  shipping.postcode: extension_attributes.shipping_assignments[0].shipping.address.postcode
+  shipping.country: extension_attributes.shipping_assignments[0].shipping.address.country_id
+  shipping.phone: extension_attributes.shipping_assignments[0].shipping.address.telephone
+
+  # === 3. CHI TIẾT ĐƠN HÀNG (LINE ITEMS) ===
+  # Đây là trường phức tạp nhất, cần ánh xạ từng mặt hàng
+  # Magento: items[] -> WooCommerce: line_items[]
+
+  # Sử dụng JMESPath để ánh xạ mảng items
+  line_items: items
+
+  # Ánh xạ các trường bên trong MẢNG LINE_ITEMS
+  # Lưu ý: Các trường này áp dụng cho từng đối tượng trong mảng items
+  line_items.product_id: product_id # Cần ánh xạ ID sản phẩm Magento sang ID sản phẩm WooCommerce
+  line_items.quantity: qty_ordered
+  line_items.name: name
+  line_items.sku: sku
+  line_items.total: row_total # Tổng tiền dòng (chưa thuế)
+  line_items.total_tax: tax_amount # Tổng thuế dòng
+
+  # === 4. TỔNG CỘNG VÀ VẬN CHUYỂN ===
+
+  total: grand_total # Tổng đơn hàng
+  shipping_total: shipping_amount # Tổng phí vận chuyển
+  shipping_tax: shipping_tax_amount # Thuế vận chuyển
+  discount_total: discount_amount # Tổng chiết khấu
+
+  # Shipping Lines (Cần tạo mảng Shipping Line với chi tiết)
+#  shipping_lines:
+#    - method_title: shipping_description
+#      method_id: shipping_method
+#      total: shipping_amount
+transformations:
+  status:
+    - type: function
+      function_name: transform_magento_value
+      params:
+        value: $SOURCE_VALUE
+        source_platform: magento
+        target_platform: woo
+        entity: order
+        field: status
+        default_value: draft

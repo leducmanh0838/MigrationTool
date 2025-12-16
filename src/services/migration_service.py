@@ -3,14 +3,14 @@ import json
 
 from config.settings import MagentoConfig, WordPressConfig
 from src.connectors.read_connectors.magento_connector import MagentoConnector
-from src.connectors.read_connectors.read_base_connector import ReadBaseConnector
+from src.connectors.read_connectors._base_read_connector import BaseReadConnector
 from src.connectors.write_connectors.woocommerce_connector import WooCommerceConnector
-from src.connectors.write_connectors.write_base_connector import WriteBaseConnector
+from src.connectors.write_connectors._base_write_connector import BaseWriteConnector
 from src.mappers.entity_migration_mapper import EntityMigrationMapper
 
 
 class MigrationService:
-    def __init__(self, migration_path: list, write_connector: WriteBaseConnector, read_connector: ReadBaseConnector):
+    def __init__(self, migration_path: list, write_connector: BaseWriteConnector, read_connector: BaseReadConnector):
         # Khởi tạo MigrationService 1 LẦN duy nhất
         self.migration_path = migration_path  # ["category", "product"]
         self.source = read_connector.get_platform_name()
@@ -64,7 +64,7 @@ if __name__ == "__main__":
                                          WordPressConfig.PASSWORD)
     service = MigrationService(
         # schema_mapper=schema_manager,
-        migration_path=['category', 'product', 'customer'],
+        migration_path=['category'],
         # migration_path=['product'],
         read_connector=magento_connector,
         write_connector=woo_connector,

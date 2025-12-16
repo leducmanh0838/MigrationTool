@@ -2,16 +2,17 @@ from abc import ABC, abstractmethod
 
 import requests
 
-from src.connectors.base_connector import BaseConnector
+from src.connectors._base_connector import BaseConnector
 
 
-class WriteBaseConnector(BaseConnector, ABC):
+class BaseWriteConnector(BaseConnector, ABC):
     def __init__(self, base_url: str, token: str = None, requester=requests):
         super().__init__(base_url, token, requester)
         self.entity_callables = {
             "product": self.create_product,
             "category": self.create_category,
             "customer": self.create_customer,
+            "order": self.create_order,
         }
 
     @abstractmethod
@@ -24,6 +25,10 @@ class WriteBaseConnector(BaseConnector, ABC):
 
     @abstractmethod
     def create_customer(self, data):
+        pass
+
+    @abstractmethod
+    def create_order(self, data):
         pass
 
     @abstractmethod

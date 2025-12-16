@@ -1,10 +1,10 @@
-from src.connectors.read_connectors.read_base_connector import ReadBaseConnector
+from src.connectors.read_connectors._base_read_connector import BaseReadConnector
 
 
 # from src.models.magento_data_types import MagentoCategorySummaryData
 
 
-class MagentoConnector(ReadBaseConnector):
+class MagentoConnector(BaseReadConnector):
     def __init__(self, base_url: str, token: str = None, api_version='V1'):
         base_api_url = f"{base_url.rstrip('/')}/{api_version.rstrip('/')}/"  # https://magento.test/rest/V1/
         super().__init__(base_api_url, token)
@@ -55,6 +55,14 @@ class MagentoConnector(ReadBaseConnector):
         Lấy tất cả Category từ Magento API và trả về dưới dạng list các MagentoCategoryData.
         """
         endpoint = "customers/search"
+        params = {
+            "searchCriteria[pageSize]": 0,  # lấy hết
+        }
+
+        return self._make_request("GET", endpoint, params=params).get("items")
+
+    def get_all_orders(self):
+        endpoint = "orders"
         params = {
             "searchCriteria[pageSize]": 0,  # lấy hết
         }

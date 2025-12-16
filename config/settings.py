@@ -25,8 +25,8 @@ class AppConfig:
     # Nếu ở môi trường production, LUÔN LUÔN phải bật xác minh SSL (True)
     VERIFY_SSL = not DEBUG_MODE  # True nếu không phải DEBUG_MODE (tức là True khi PROD)
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
-    YAML_MAPPINGS_DIR = PROJECT_ROOT / 'config' / 'yaml_mappings'
-    YAML_TRANSFORMATION_CONFIGS_DIR = PROJECT_ROOT / 'config' / 'yaml_transformation_configs'
+    YAML_MAPPINGS_DIR = PROJECT_ROOT / 'yaml_mappings' / 'entity_definitions'
+    YAML_TRANSFORMATION_CONFIGS_DIR = PROJECT_ROOT / 'yaml_mappings' / 'value_mappings'
     # module_name = f"src.utils.data_transformers"
     DATA_TRANSFORMER_PATH = 'src.mappers.data_mappers.data_transformers'
     DATA_VALIDATORS_PATH = 'src.mappers.data_mappers.data_validators'
@@ -69,5 +69,7 @@ class YamlValueConfig:
     # with open(AppConfig.YAML_CONFIG_DIR / "product.yaml", 'r', encoding='utf-8') as f:
     #     MAGENTO_DATA_MAPPINGS = yaml.safe_load(f)
 
-
+# print("YAML_MAPPINGS")
+# print(json.dumps(YamlValueConfig.YAML_MAPPINGS, indent=4))
+# print("YAML_TRANSFORMATION_CONFIGS")
 # print(json.dumps(YamlValueConfig.YAML_TRANSFORMATION_CONFIGS, indent=4))
