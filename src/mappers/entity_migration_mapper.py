@@ -4,7 +4,7 @@ from typing import Dict, Any
 import jmespath
 
 from config.settings import YamlValueConfig
-from config.yaml_configs import VALIDATOR_FUNCTIONS, TRANSFORMER_FUNCTIONS, POST_PROCESSOR_FUNCTIONS
+from src.utils.function_registry import VALIDATOR_FUNCTIONS, TRANSFORMER_FUNCTIONS, POST_PROCESSOR_FUNCTIONS
 from src.utils import mapper_utils
 
 
@@ -101,19 +101,3 @@ class EntityMigrationMapper:
                                                          context=context)
             func = mapper_utils.get_func_by_func_config(func_config, POST_PROCESSOR_FUNCTIONS)
             func(**params)
-
-
-if __name__ == "__main__":
-    magento_test_data = {
-        "id": 2,
-        "parent_id": 0,
-        "name": "Men's Clothing",
-        "position": 1,
-        "custom_attributes": [{"attribute_code": "children_count", "value": "10"}],
-    }
-
-    migration = EntityMigrationMapper("magento", "woo", "category", ["abc"])
-    valid = migration.validate_record(magento_test_data, None)
-    target_data = migration.to_record_target(magento_test_data, None)
-    print('migration.field_mappings', json.dumps(migration.field_mappings, indent=4))
-    print('migration.transformations_config', json.dumps(migration.transformations_config, indent=4))

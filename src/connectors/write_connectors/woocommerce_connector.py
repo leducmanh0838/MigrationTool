@@ -1,10 +1,9 @@
 import json
 
 import requests
-from requests_oauthlib import OAuth1Session
 
 from config.settings import WordPressConfig
-from src.connectors.write_connectors._base_write_connector import BaseWriteConnector
+from src.connectors.abstract.base_write_connector import BaseWriteConnector
 
 
 class WooCommerceConnector(BaseWriteConnector):

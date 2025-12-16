@@ -14,6 +14,7 @@ TRANSFORMER_FUNCTIONS = {
     'map_ids_to_target': transformers.map_ids_to_target,
     'transform_magento_value': transformers.transform_magento_value,
     'null_to_empty_string': transformers.null_to_empty_string,
+    'order_line_item_format_totals_to_string': transformers.order_line_item_format_totals_to_string,
 }
 
 VALIDATOR_FUNCTIONS = {

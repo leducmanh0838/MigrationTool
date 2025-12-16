@@ -1,4 +1,4 @@
-from src.connectors.read_connectors._base_read_connector import BaseReadConnector
+from src.connectors.abstract.base_read_connector import BaseReadConnector
 
 
 # from src.models.magento_data_types import MagentoCategorySummaryData

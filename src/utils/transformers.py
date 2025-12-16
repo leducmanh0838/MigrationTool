@@ -82,3 +82,25 @@ def null_to_empty_string(value) -> str:
     if value is None:
         return ""
     return value
+
+
+def order_line_item_format_totals_to_string(source_value):
+    # source_value là mảng line_items đã được ánh xạ bởi JMESPath
+    if not isinstance(source_value, list):
+        return source_value
+
+    for item in source_value:
+        # Chuyển đổi các trường số (float/int) thành chuỗi,
+        # giữ lại 2 chữ số thập phân nếu cần
+
+        if 'total' in item and item['total'] is not None:
+            # Ví dụ: 150.0000 -> "150.00"
+            item['total'] = "{:.2f}".format(float(item['total']))
+
+        if 'subtotal' in item and item['subtotal'] is not None:
+            item['subtotal'] = "{:.2f}".format(float(item['subtotal']))
+
+        if 'price' in item and item['price'] is not None:
+            item['price'] = "{:.2f}".format(float(item['price']))
+
+    return source_value

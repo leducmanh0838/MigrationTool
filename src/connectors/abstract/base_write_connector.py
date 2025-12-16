@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import requests
 
-from src.connectors._base_connector import BaseConnector
+from src.connectors.abstract.base_connector import BaseConnector
 
 
 class BaseWriteConnector(BaseConnector, ABC):
