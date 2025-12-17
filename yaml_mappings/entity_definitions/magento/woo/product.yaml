@@ -75,3 +75,14 @@ transformations:
       function_name: normalize_string_mapper
       params:
         value: $SOURCE_VALUE
+
+post_processors:
+  - type: function
+    function_name: save_id_mapping
+    params:
+      created_target_record: $CREATED_TARGET_RECORD
+      source_record: $SOURCE_RECORD
+      source_id_field: id
+      target_id_field: id
+      entity: product
+      context: $CONTEXT

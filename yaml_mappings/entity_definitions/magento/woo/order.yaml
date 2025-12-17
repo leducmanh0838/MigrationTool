@@ -13,6 +13,7 @@ fields:
   status: status # Trạng thái cần được chuyển đổi (xem phần Transformations)
 
   date_created: created_at
+  customer_id: customer_id
 
   order_key: increment_id # Magento Increment ID thường được dùng làm khóa tham chiếu
 
@@ -102,3 +103,11 @@ transformations:
       function_name: order_line_item_format_totals_to_string
       params:
         source_value: $SOURCE_VALUE
+
+  customer_id:
+    - type: function
+      function_name: map_id_to_target
+      params:
+        entity: customer
+        source_id: $SOURCE_VALUE
+        context: $CONTEXT

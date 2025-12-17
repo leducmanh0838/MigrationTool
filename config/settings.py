@@ -30,6 +30,7 @@ class AppConfig:
     # module_name = f"src.utils.data_transformers"
     DATA_TRANSFORMER_PATH = 'src.mappers.data_mappers.data_transformers'
     DATA_VALIDATORS_PATH = 'src.mappers.data_mappers.data_validators'
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:my_root_password_123@localhost:3307/migration_db"
 
 
 # --- CẤU HÌNH MAGENTO (SOURCE) ---

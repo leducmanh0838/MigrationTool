@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 from src.connectors.abstract.base_read_connector import BaseReadConnector
 
 
@@ -12,59 +14,35 @@ class MagentoConnector(BaseReadConnector):
     def get_platform_name(self):
         return "magento"
 
-    def get_products(self, page=1, page_size=50) -> list:
-        """
-        Lấy danh sách sản phẩm từ Magento
-        Endpoint: /V1/products
-        """
-        endpoint = "products"
-
-        # Magento searchCriteria parameters
+    def _get_entities_in_magento(self, endpoint, page=1, page_size=50, sort_field="entity_id", sort_dir="ASC", **kwargs) -> Tuple[List, bool]:
         params = {
             "searchCriteria[pageSize]": page_size,
             "searchCriteria[currentPage]": page,
-            # Có thể thêm filter nếu cần
+            "searchCriteria[sortOrders][0][field]": sort_field,
+            "searchCriteria[sortOrders][0][direction]": sort_dir
         }
 
-        return self._make_request("GET", endpoint, params=params)
+        if kwargs:
+            params.update(kwargs)
 
-    def get_all_products(self, page_size=50) -> list:
-        """
-        Hàm Generator để lấy TOÀN BỘ sản phẩm (tự động loop qua các trang)
-        """
+        response_data = self._make_request("GET", endpoint, params=params)
+        items = response_data.get("items", [])
+        total_count = response_data.get("total_count", 0)
+        is_load_more = (page * page_size) < total_count
+        return items, is_load_more
+
+    def get_product_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "products"
-        params = {
-            "searchCriteria[pageSize]": 0,  # lấy hết
-        }
+        return self._get_entities_in_magento(endpoint, **kwargs)
 
-        return self._make_request("GET", endpoint, params=params).get("items")
-
-    def get_all_categories(self):
-        """
-        Lấy tất cả Category từ Magento API và trả về dưới dạng list các MagentoCategoryData.
-        """
+    def get_category_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "categories/list"
-        params = {
-            "searchCriteria[pageSize]": 0,  # lấy hết
-        }
+        return self._get_entities_in_magento(endpoint, **kwargs)
 
-        return self._make_request("GET", endpoint, params=params).get("items")
-
-    def get_all_customers(self):
-        """
-        Lấy tất cả Category từ Magento API và trả về dưới dạng list các MagentoCategoryData.
-        """
+    def get_customer_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "customers/search"
-        params = {
-            "searchCriteria[pageSize]": 0,  # lấy hết
-        }
+        return self._get_entities_in_magento(endpoint, **kwargs)
 
-        return self._make_request("GET", endpoint, params=params).get("items")
-
-    def get_all_orders(self):
+    def get_order_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "orders"
-        params = {
-            "searchCriteria[pageSize]": 0,  # lấy hết
-        }
-
-        return self._make_request("GET", endpoint, params=params).get("items")
+        return self._get_entities_in_magento(endpoint, **kwargs)

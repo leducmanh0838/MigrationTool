@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Tuple, List
 
 import requests
 
@@ -10,28 +11,28 @@ class BaseReadConnector(BaseConnector, ABC):
     def __init__(self, base_url: str, token: str = None, requester=requests):
         super().__init__(base_url, token, requester)
         self.entity_callables = {
-            "product": self.get_all_products,
-            "category": self.get_all_categories,
-            "customer": self.get_all_customers,
-            "order": self.get_all_orders,
+            "product": self.get_product_batch,
+            "category": self.get_category_batch,
+            "customer": self.get_customer_batch,
+            "order": self.get_order_batch,
         }
 
     @abstractmethod
-    def get_all_products(self) -> list:
+    def get_product_batch(self, **kwargs) -> Tuple[List, bool]:
         pass
 
     @abstractmethod
-    def get_all_categories(self) -> list:
+    def get_category_batch(self, **kwargs) -> Tuple[List, bool]:
         pass
 
     @abstractmethod
-    def get_all_customers(self) -> list:
+    def get_customer_batch(self, **kwargs) -> Tuple[List, bool]:
         pass
 
     @abstractmethod
-    def get_all_orders(self) -> list:
+    def get_order_batch(self, **kwargs) -> Tuple[List, bool]:
         pass
 
-    def get_all_entities(self, entity_name: str) -> list:
+    def get_entity_batch(self, entity_name: str, **kwargs) -> Tuple[List, bool]:
         entity_callable = self.entity_callables.get(entity_name)
-        return entity_callable()
+        return entity_callable(**kwargs)

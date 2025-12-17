@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0 # Hoặc mysql:latest
+    container_name: migration_mysql_db
+    restart: always # Tự động khởi động lại nếu bị lỗi
+    environment:
+      # Mật khẩu root RÕ RÀNG VÀ DỄ NHỚ
+      MYSQL_ROOT_PASSWORD: my_root_password_123
+
+      # Tên database đã sửa
+      MYSQL_DATABASE: migration_db
+    ports:
+      - "3307:3306"
+    volumes:
+      # LƯU Ý QUAN TRỌNG: Điều này giữ dữ liệu của bạn ngay cả khi container bị xóa.
+      - mysql_data:/var/lib/mysql
+
+# Định nghĩa volume để lưu trữ dữ liệu
+volumes:
+  mysql_data:

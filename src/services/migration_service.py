@@ -6,6 +6,8 @@ from src.connectors.read_connectors.magento_connector import MagentoConnector
 from src.connectors.abstract.base_read_connector import BaseReadConnector
 from src.connectors.write_connectors.woocommerce_connector import WooCommerceConnector
 from src.connectors.abstract.base_write_connector import BaseWriteConnector
+from src.database.dao.migration_dao import MigrationDAO
+from src.database.session import get_db
 from src.mappers.entity_migration_mapper import EntityMigrationMapper
 
 
@@ -21,23 +23,34 @@ class MigrationService:
             entity: EntityMigrationMapper(self.source, self.target, entity) for entity in self.migration_path
         }
 
-    def run_migration(self):
+    def run_migration(self, migration_id=None):
         """Khởi chạy một phiên migrate mới."""
+        # nếu muốn tạo migration
+        if migration_id is None:
+            with get_db() as db:
+                dao = MigrationDAO(db)
+                created = dao.create_migration(source_platform=self.source,
+                                               target_platform=self.target,
+                                               entity_path=self.migration_path)
+                migration_id = created.id
+
+        print("migration_id = ", migration_id)
 
         # 1. Khởi tạo Dữ liệu/Service cho phiên chạy mới
         migration_context = {
             "entity_id_maps": {
                 'category': {},
                 'product': {},
+                'customer': {},
             }
         }
 
         for entity in self.migration_path:
-            self._run_entity_migration(entity, migration_context)
+            self._migrate_data_batch(entity, migration_context)
 
             print("migration_context: ", json.dumps(migration_context, indent=4))
 
-    def _run_entity_migration(self, entity, migration_context):
+    def _migrate_data_batch(self, entity, migration_context):
         entity_source_data = self.read_connector.get_all_entities(entity)
         mapper = self.entity_mappers.get(entity)
         for record in entity_source_data:
@@ -60,14 +73,17 @@ class MigrationService:
 
 if __name__ == "__main__":
     magento_connector = MagentoConnector(MagentoConfig.BASE_URL, token=MagentoConfig.ACCESS_TOKEN)
-    woo_connector = WooCommerceConnector(WordPressConfig.BASE_URL, WordPressConfig.USERNAME,
-                                         WordPressConfig.PASSWORD)
-    service = MigrationService(
-        # schema_mapper=schema_manager,
-        migration_path=['order'],
-        # migration_path=['product'],
-        read_connector=magento_connector,
-        write_connector=woo_connector,
-    )
-
-    service.run_migration()
+    data, is_load_more = magento_connector.get_entity_batch("product", page_size=30, page=2)
+    print("products: ", json.dumps(data, indent=4))
+    print("is_load_more: ", is_load_more)
+    # woo_connector = WooCommerceConnector(WordPressConfig.BASE_URL, WordPressConfig.USERNAME,
+    #                                      WordPressConfig.PASSWORD)
+    # service = MigrationService(
+    #     # schema_mapper=schema_manager,
+    #     # migration_path=['category', 'product', 'customer', 'order'],
+    #     migration_path=['customer', 'order'],
+    #     read_connector=magento_connector,
+    #     write_connector=woo_connector,
+    # )
+    #
+    # service.run_migration()

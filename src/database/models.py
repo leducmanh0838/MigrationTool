@@ -1,52 +1,27 @@
-from enum import Enum, unique
-
-from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint, TEXT, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint, TEXT, Text, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
+
+from src.database.types import PlatformType
 
 Base = declarative_base()  # Base class cho các model
 
 
-@unique
-class MigrationPlatform(Enum):
-    # (ID SỐ, TÊN CHUỖI)
-    MAGENTO = (1, "magento")
-    WOOCOMMERCE = (2, "woo")
-    MEDUSA = (3, "medusa")
-
-    def __init__(self, id_value, name_string):
-        self.id_value = id_value
-        self.name_string = name_string
-
-    @classmethod
-    def from_name(cls, name_string: str):
-        """
-        Tìm kiếm thành viên Enum dựa trên tên chuỗi (name_string).
-        """
-        # Duyệt qua tất cả các thành viên (member) trong Enum
-        for member in cls:
-            # So sánh tên chuỗi
-            if member.name_string == name_string.lower():
-                return member
-
-        # Nếu không tìm thấy, bạn có thể ném ra một lỗi (Exception)
-        # hoặc trả về None, tùy thuộc vào yêu cầu của bạn.
-        raise ValueError(f"Tên nền tảng không hợp lệ: '{name_string}'")
-
-# 1. Lấy ID để lưu vào DB:
-# magento_id_to_save = MigrationPlatform.MAGENTO.id_value
-
-# 2. Lấy Tên chuỗi để hiển thị:
-# magento_name = MigrationPlatform.MAGENTO.name_string
-
 class Migration(Base):
     __tablename__ = 'migration'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    source_platform_id = Column(Integer, nullable=False)
-    target_platform_id = Column(Integer, nullable=False)
+    source_platform = Column(String(50), nullable=False)
+    target_platform = Column(String(50), nullable=False)
+
+    entity_path = Column(JSON, nullable=False)
+
+    checkpoint_source_entity_id = Column(Integer, nullable=True)
+    checkpoint_source_entity_type = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=func.now())
 
     def __str__(self):
-        return f"{self.source_platform_id} - {self.target_platform_id}"
+        return (f"<Migration(platform_id='{self.source_platform_id} -> {self.target_platform_id}', "
+                f"checkpoint_source_entity_id='{self.checkpoint_source_entity_id}')>",
+                f"checkpoint_source_entity_type='{self.checkpoint_source_entity_type}')>")
 
 
 class IdMapping(Base):
@@ -69,24 +44,13 @@ class IdMapping(Base):
         return f"<IdMapping(source='{self.entity_type}:{self.source_entity_id}', target='{self.target_entity_id}')>"
 
 
-class Checkpoint(Base):
-    __tablename__ = 'wp_migration_checkpoint'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    checkpoint_key = Column(String(100), nullable=False, unique=True)  # Ví dụ: 'last_migrated_product_id'
-    checkpoint_value = Column(String(255), nullable=False)  # Ví dụ: '10500'
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
-    def __repr__(self):
-        return f"<Checkpoint(key='{self.checkpoint_key}', value='{self.checkpoint_value}')>"
-
-
 class DeadLetterQueue(Base):
-    __tablename__ = 'wp_migration_dlq'
+    __tablename__ = 'dlq'
     # Trường Khóa chính
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Dữ liệu Thất bại
     entity_type = Column(String(50), nullable=False)
-    source_id = Column(String(255), nullable=False)
+    source_entity_id = Column(Integer, nullable=False)
     # Thông tin Lỗi
     reason = Column(String(255), nullable=False)  # Lý do ngắn gọn
     error_details = Column(TEXT)  # Chi tiết lỗi đầy đủ (Exception trace)
@@ -94,7 +58,9 @@ class DeadLetterQueue(Base):
     # Metadata
     attempted_at = Column(DateTime, default=func.now())
 
-    def __repr__(self):
+    migration_id = Column(Integer, ForeignKey(Migration.id, ondelete='RESTRICT'), nullable=False)
+
+    def __str__(self):
         return f"<DLQ(entity='{self.entity_type}:{self.source_id}', reason='{self.reason}')>"
 
 
@@ -105,4 +71,22 @@ if __name__ == '__main__':
     DATABASE_URL = "mysql+pymysql://root:my_root_password_123@localhost:3307/migration_db"
 
     engine = create_engine(DATABASE_URL)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)  # Tạo các bảng nếu chúng chưa tồn tại
+"""
+docker exec -it migration_mysql_db mysql -u root -p
+
+SHOW DATABASES;
+
+-- Phiên 1: Migration từ Magento sang Woo, Checkpoint cuối cùng là Product ID 500
+INSERT INTO migration (source_platform_id, target_platform_id, checkpoint_source_entity_id, checkpoint_source_entity_type) 
+VALUES 
+(1, 2, 500, 'product'); 
+
+-- Phiên 2: Migration từ Magento sang Medusa, Checkpoint cuối cùng là Customer ID 100
+INSERT INTO migration (source_platform_id, target_platform_id, checkpoint_source_entity_id, checkpoint_source_entity_type) 
+VALUES 
+(1, 3, 100, 'customer');
+
+SELECT * FROM migration;
+"""

@@ -14,11 +14,11 @@ class EntityMigrationMapper:
         # self.target = target
         # self.entity = entity
         mapping_config = YamlValueConfig.YAML_MAPPINGS.get(source).get(target).get(entity)
-        if field_parts is None:
-            mapping_config = mapping_config.get(entity)
-        else:
-            for field_part in field_parts:
-                mapping_config = mapping_config.get(field_part)
+        # if field_parts is None:
+        #     mapping_config = mapping_config.get(entity)
+        # else:
+        #     for field_part in field_parts:
+        #         mapping_config = mapping_config.get(field_part)
         self.field_mappings = mapping_config.get('fields', {})
         self.transformations_config = mapping_config.get('transformations', {})
         # self.special_transformations_config = mapping_config.get('special_transformations', {})
