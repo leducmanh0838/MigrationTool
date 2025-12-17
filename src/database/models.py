@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint, TEXT, Text, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
 
-from src.database.types import PlatformType
-
 Base = declarative_base()  # Base class cho các model
 
 
@@ -14,20 +12,20 @@ class Migration(Base):
 
     entity_path = Column(JSON, nullable=False)
 
-    checkpoint_source_entity_id = Column(Integer, nullable=True)
-    checkpoint_source_entity_type = Column(String(50), nullable=True)
+    checkpoint_source_entity_page = Column(Integer, nullable=True)
+    checkpoint_source_entity_name = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=func.now())
 
     def __str__(self):
         return (f"<Migration(platform_id='{self.source_platform_id} -> {self.target_platform_id}', "
-                f"checkpoint_source_entity_id='{self.checkpoint_source_entity_id}')>",
-                f"checkpoint_source_entity_type='{self.checkpoint_source_entity_type}')>")
+                f"checkpoint_source_entity_id='{self.checkpoint_source_entity_page}')>",
+                f"checkpoint_source_entity_name='{self.checkpoint_source_entity_name}')>")
 
 
 class IdMapping(Base):
     __tablename__ = 'id_mapping'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    entity_type = Column(String(50), nullable=False)  # Ví dụ: 'product', 'customer', 'order'
+    entity_name = Column(String(50), nullable=False)  # Ví dụ: 'product', 'customer', 'order'
 
     source_entity_id = Column(Integer, nullable=False)
     target_entity_id = Column(Integer, nullable=False)
@@ -37,11 +35,11 @@ class IdMapping(Base):
     migration_id = Column(Integer, ForeignKey(Migration.id, ondelete='RESTRICT'), nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('migration_id', 'entity_type', 'source_entity_id', name='idx_source_entity'),
+        UniqueConstraint('migration_id', 'entity_name', 'source_entity_id', name='idx_source_entity'),
     )
 
     def __str__(self):
-        return f"<IdMapping(source='{self.entity_type}:{self.source_entity_id}', target='{self.target_entity_id}')>"
+        return f"<IdMapping(source='{self.entity_name}:{self.source_entity_id}', target='{self.target_entity_id}')>"
 
 
 class DeadLetterQueue(Base):
@@ -49,8 +47,8 @@ class DeadLetterQueue(Base):
     # Trường Khóa chính
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Dữ liệu Thất bại
-    entity_type = Column(String(50), nullable=False)
-    source_entity_id = Column(Integer, nullable=False)
+    entity_name = Column(String(50), nullable=False)
+    # source_entity_id = Column(Integer, nullable=False)
     # Thông tin Lỗi
     reason = Column(String(255), nullable=False)  # Lý do ngắn gọn
     error_details = Column(TEXT)  # Chi tiết lỗi đầy đủ (Exception trace)
@@ -61,7 +59,7 @@ class DeadLetterQueue(Base):
     migration_id = Column(Integer, ForeignKey(Migration.id, ondelete='RESTRICT'), nullable=False)
 
     def __str__(self):
-        return f"<DLQ(entity='{self.entity_type}:{self.source_id}', reason='{self.reason}')>"
+        return f"<DLQ(entity='{self.entity_name}:{self.source_id}', reason='{self.reason}')>"
 
 
 if __name__ == '__main__':
@@ -88,5 +86,5 @@ INSERT INTO migration (source_platform_id, target_platform_id, checkpoint_source
 VALUES 
 (1, 3, 100, 'customer');
 
-SELECT * FROM migration;
+SELECT id, source_platform, target_platform, entity_path, checkpoint_source_entity_id, checkpoint_source_entity_name FROM migration;
 """

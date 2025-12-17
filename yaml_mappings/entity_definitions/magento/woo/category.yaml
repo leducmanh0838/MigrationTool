@@ -3,6 +3,10 @@ target: woocommerce
 entity: category
 description: Mapping definition from Magento Category structure to WooCommerce Category structure.
 
+keys:
+  primary_source: id
+  primary_target: id
+
 fields:
   # Trường đích (Woo) : JMESPath Query (Magento)
   name: name
@@ -43,13 +47,13 @@ transformations:
         source_id: $SOURCE_VALUE
         context: $CONTEXT
 
-post_processors:
-  - type: function
-    function_name: save_id_mapping
-    params:
-      created_target_record: $CREATED_TARGET_RECORD
-      source_record: $SOURCE_RECORD
-      source_id_field: id
-      target_id_field: id
-      entity: category
-      context: $CONTEXT
+#post_processors:
+#  - type: function
+#    function_name: save_id_mapping
+#    params:
+#      created_target_record: $CREATED_TARGET_RECORD
+#      source_record: $SOURCE_RECORD
+#      source_id_field: id
+#      target_id_field: id
+#      entity: category
+#      context: $CONTEXT

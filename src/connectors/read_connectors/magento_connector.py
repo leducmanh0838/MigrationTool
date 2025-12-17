@@ -14,7 +14,8 @@ class MagentoConnector(BaseReadConnector):
     def get_platform_name(self):
         return "magento"
 
-    def _get_entities_in_magento(self, endpoint, page=1, page_size=50, sort_field="entity_id", sort_dir="ASC", **kwargs) -> Tuple[List, bool]:
+    def _get_entities_in_magento(self, endpoint, page=1, page_size=100, sort_field="entity_id", sort_dir="ASC",
+                                 **kwargs) -> Tuple[List, bool]:
         params = {
             "searchCriteria[pageSize]": page_size,
             "searchCriteria[currentPage]": page,

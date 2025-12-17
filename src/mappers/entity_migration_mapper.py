@@ -10,15 +10,9 @@ from src.utils import mapper_utils
 
 class EntityMigrationMapper:
     def __init__(self, source: str, target: str, entity: str, field_parts=None):
-        # self.source = source
-        # self.target = target
-        # self.entity = entity
         mapping_config = YamlValueConfig.YAML_MAPPINGS.get(source).get(target).get(entity)
-        # if field_parts is None:
-        #     mapping_config = mapping_config.get(entity)
-        # else:
-        #     for field_part in field_parts:
-        #         mapping_config = mapping_config.get(field_part)
+        self.primary_source = mapping_config.get("keys", {}).get("primary_source", "id")
+        self.primary_target = mapping_config.get("keys", {}).get("primary_target", "id")
         self.field_mappings = mapping_config.get('fields', {})
         self.transformations_config = mapping_config.get('transformations', {})
         # self.special_transformations_config = mapping_config.get('special_transformations', {})
@@ -92,12 +86,17 @@ class EntityMigrationMapper:
                             print("Lỗi: 'truncate_value' được gọi nhưng không có 'max_value'.")
         return True, source_record
 
-    def post_process(self, source_record=None, created_target_record=None, context=None):
-        # mapper_utils.post_process_util(self.post_processors_config, global_context=global_context)
-        for func_config in self.post_processors_config:
-            params = mapper_utils.resolve_dynamic_params(func_config=func_config,
-                                                         source_record=source_record,
-                                                         created_target_record=created_target_record,
-                                                         context=context)
-            func = mapper_utils.get_func_by_func_config(func_config, POST_PROCESSOR_FUNCTIONS)
-            func(**params)
+    # def post_process(self, source_record=None, created_target_record=None, context=None):
+    #     # mapper_utils.post_process_util(self.post_processors_config, global_context=global_context)
+    #     for func_config in self.post_processors_config:
+    #         params = mapper_utils.resolve_dynamic_params(func_config=func_config,
+    #                                                      source_record=source_record,
+    #                                                      created_target_record=created_target_record,
+    #                                                      context=context)
+    #         func = mapper_utils.get_func_by_func_config(func_config, POST_PROCESSOR_FUNCTIONS)
+    #         func(**params)
+
+if __name__ == '__main__':
+    mapper = EntityMigrationMapper("magento", "woo", "category")
+    print(mapper.primary_source)
+    print(mapper.primary_target)

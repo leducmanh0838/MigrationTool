@@ -2,6 +2,8 @@
 import json
 
 from config.settings import YamlValueConfig
+from src.database.dao.id_mapping_dao import IdMappingDAO
+from src.database.session import get_db
 
 
 def test_transformation(value1, value2):
@@ -11,35 +13,53 @@ def test_transformation(value1, value2):
     }
 
 
-def map_id_to_target(entity, source_id, context):
+def map_id_to_target(entity, source_id, default_value=0, context=None):
     print("map_id_to_target:")
-    if context and context.get('entity_id_maps') and context.get('entity_id_maps').get(entity):
-        category_id_map = context.get('entity_id_maps').get(entity)
-        return category_id_map.get(source_id)
-    return 0
+    with get_db() as db:
+        dao = IdMappingDAO(db)
+        record = dao.find_one_by(
+            entity_name=entity,
+            source_entity_id=source_id,
+            migration_id=context.get("migration_id", 0)
+        )
+        if record:
+            return record.target_entity_id
+        return default_value
 
 
 def map_ids_to_target(entity, source_ids: list, context):
     print(f"map_ids_to_target")
-    print(f"entity ", entity)
-    print(f"source_ids ", json.dumps(source_ids, indent=4))
-    print(f"context ", json.dumps(context, indent=4))
 
-    if (context and
-            context.get('entity_id_maps') and
-            context['entity_id_maps'].get(entity)):
+    source_ids_dict = [item['id'] for item in source_ids]
 
-        category_id_map = context['entity_id_maps'][entity]
-
-        # Sử dụng list comprehension để ánh xạ từng ID nguồn
-        target_ids = []
-        for source_id in source_ids:
-            target_id = category_id_map.get(int(source_id.get("id")))
-            if target_id is not None and target_id != 0:
-                target_ids.append({"id": target_id})
-        print(f"target_ids ", json.dumps(target_ids, indent=4))
+    with get_db() as db:
+        dao = IdMappingDAO(db)
+        records = dao.filter_by(
+            filters={
+                "entity_name": entity,
+                "source_entity_id": source_ids_dict,
+                "migration_id": context.get("migration_id", 0)
+            }
+        )
+        target_ids = [{"id": record.id} for record in records]
+        print("target_ids: ", target_ids)
         return target_ids
-    return []
+
+    # if (context and
+    #         context.get('entity_id_maps') and
+    #         context['entity_id_maps'].get(entity)):
+    #
+    #     category_id_map = context['entity_id_maps'][entity]
+    #
+    #     # Sử dụng list comprehension để ánh xạ từng ID nguồn
+    #     target_ids = []
+    #     for source_id in source_ids:
+    #         target_id = category_id_map.get(int(source_id.get("id")))
+    #         if target_id is not None and target_id != 0:
+    #             target_ids.append({"id": target_id})
+    #     print(f"target_ids ", json.dumps(target_ids, indent=4))
+    #     return target_ids
+    # return []
 
 
 def normalize_string_mapper(value: str, **kwargs) -> str:
@@ -76,6 +96,7 @@ def transform_magento_value(value: int, source_platform: str,
             target_platform)
     except Exception:
         return default_value
+
 
 def null_to_empty_string(value) -> str:
     print("null_to_empty_string")

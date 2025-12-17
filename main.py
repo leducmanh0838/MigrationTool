@@ -68,6 +68,7 @@ CUSTOM_EXCLUDES = {
     'requirements.txt',
     # Các thư mục riêng của bạn (tôi tạm loại trừ tests và .idea để sơ đồ ngắn hơn)
     'tests',
+    'main.py',
 }
 
 # Thay thế project_root = build_project_tree(...) bằng print_project_tree(...)

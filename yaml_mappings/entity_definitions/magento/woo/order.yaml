@@ -3,6 +3,10 @@ target: woocommerce
 entity: order
 description: Mapping definition from Magento Order structure to WooCommerce Order structure.
 
+keys:
+  primary_source: entity_id
+  primary_target: id
+
 fields:
   # === 1. THÔNG TIN CƠ BẢN VÀ TRẠNG THÁI ===
   # customer_id: Cần ánh xạ riêng sau khi migrate Customer
