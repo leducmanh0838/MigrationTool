@@ -1,5 +1,9 @@
+import json
 from typing import Tuple, List
 
+from requests import RequestException
+
+from config.settings import AppConfig
 from src.connectors.abstract.base_read_connector import BaseReadConnector
 
 
@@ -10,6 +14,28 @@ class MagentoConnector(BaseReadConnector):
     def __init__(self, base_url: str, token: str = None, api_version='V1'):
         base_api_url = f"{base_url.rstrip('/')}/{api_version.rstrip('/')}/"  # https://magento.test/rest/V1/
         super().__init__(base_api_url, token)
+
+    def check_connection(self) -> Tuple[bool, str | None]:
+        endpoint = "store/storeConfigs"
+        message = None
+        try:
+            response = self.requester.request('GET',
+                                              f"{self.base_url}/{endpoint}",
+                                              headers=self.headers,
+                                              verify=AppConfig.VERIFY_SSL)
+            if response.status_code == 200:
+                return True, message
+            elif response.status_code == 401:
+                message = "Error 401: The API Key (Token) is incorrect or has expired."
+            elif response.status_code == 404:
+                message = "Error 404: URL is incorrect."
+            else:
+                message = f"Error {response.status_code}: Unknown error"
+
+        except RequestException as e:
+            message = f"Connection error: {e}"
+
+        return False, message
 
     def get_platform_name(self):
         return "magento"

@@ -1,8 +1,10 @@
 import json
+from typing import Tuple
 
 import requests
+from requests import RequestException
 
-from config.settings import WordPressConfig
+from config.settings import WordPressConfig, AppConfig
 from src.connectors.abstract.base_write_connector import BaseWriteConnector
 
 
@@ -16,6 +18,30 @@ class WooCommerceConnector(BaseWriteConnector):
         #     "product": self.create_product,
         #     "category": self.create_category,
         # }
+
+    def check_connection(self) -> Tuple[bool, str | None]:
+        endpoint = "system_status"
+        message = None
+        try:
+            response = self.requester.request('GET',
+                                              f"{self.base_url}/{endpoint}",
+                                              headers=self.headers,
+                                              auth=self.auth,
+                                              verify=AppConfig.VERIFY_SSL)
+
+            if response.status_code == 200:
+                return True, message
+            elif response.status_code == 401:
+                message = "Error 401: The API Key (Token) is incorrect or has expired."
+            elif response.status_code == 404:
+                message = "Error 404: URL is incorrect."
+            else:
+                message = f"Error {response.status_code}: Unknown error"
+
+        except RequestException as e:
+            message = f"Connection error: {e}"
+
+        return False, message
 
     def get_platform_name(self):
         return "woo"

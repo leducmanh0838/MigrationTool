@@ -1,6 +1,7 @@
 import logging
 import time
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 import requests
 
@@ -19,6 +20,10 @@ class BaseConnector(ABC):
         if token:
             self.headers['Authorization'] = f'Bearer {token}'
 
+    @abstractmethod
+    def check_connection(self) -> Tuple[bool, str | None]:
+        pass
+
     def _make_request(self, method: str, endpoint: str, params=None, data=None, auth=None, retries=3):
         """
         General request sending function, handling Retry and Rate Limit (HTTP 429)
@@ -34,7 +39,6 @@ class BaseConnector(ABC):
                                                   json=data,
                                                   auth=auth,
                                                   verify=AppConfig.VERIFY_SSL)
-                print('response.status_code: ', response.status_code)
                 if 200 <= response.status_code < 300:
                     return response.json()
 

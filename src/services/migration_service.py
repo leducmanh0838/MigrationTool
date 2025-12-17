@@ -97,7 +97,6 @@ class MigrationService:
                         source_entity_id=source_record.get(mapper.primary_source),
                         migration_id=self.migration_id
                     )
-                    print("exit=", exit)
                     if exit:
                         continue
                 # 2. Bước Validate
@@ -109,7 +108,6 @@ class MigrationService:
                         validated_record,
                         context=migration_context
                     )
-                    print('target_data: ', json.dumps(target_data, indent=4))
                     # 4. Bước Ghi vào đích (WooCommerce)
                     created_target_record = self.write_connector.create_entity(entity, target_data)
                     # 5. Write id mapping
@@ -122,7 +120,6 @@ class MigrationService:
                             migration_id=self.migration_id
                         )
             except Exception as e:
-                print("except Exception as e: ")
                 reason = str(e) if str(e) else type(e).__name__
                 error_details = traceback.format_exc()
                 raw_data_json = json.dumps(source_record)
@@ -137,26 +134,26 @@ class MigrationService:
                         raw_data_json=raw_data_json,
                         migration_id=self.migration_id,
                     )
-                    print(f"Có lỗi: {reason}")
         return is_load_more
 
 
 if __name__ == "__main__":
     # magento_connector = MagentoConnector(MagentoConfig.BASE_URL, token=MagentoConfig.ACCESS_TOKEN)
     # data, is_load_more = magento_connector.get_entity_batch("customer", page_size=30, page=2)
-    # print("entities: ", json.dumps(data, indent=4))
-    # print("is_load_more: ", is_load_more)
+
     magento_connector = MagentoConnector(MagentoConfig.BASE_URL, token=MagentoConfig.ACCESS_TOKEN)
 
     woo_connector = WooCommerceConnector(WordPressConfig.BASE_URL, WordPressConfig.USERNAME,
                                          WordPressConfig.PASSWORD)
-    service = MigrationService(
-        # schema_mapper=schema_manager,
-        migration_path=['category', 'product', 'customer', 'order'],
-        # migration_path=['category', 'product'],
-        # migration_id=11,
-        read_connector=magento_connector,
-        write_connector=woo_connector,
-    )
 
-    service.run_migration()
+    a, b = woo_connector.check_connection()
+    # service = MigrationService(
+    #     # schema_mapper=schema_manager,
+    #     migration_path=['category', 'product', 'customer', 'order'],
+    #     # migration_path=['category', 'product'],
+    #     # migration_id=11,
+    #     read_connector=magento_connector,
+    #     write_connector=woo_connector,
+    # )
+    #
+    # service.run_migration()
