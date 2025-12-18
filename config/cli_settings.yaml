@@ -1,19 +1,20 @@
 connectors:
   magento:
     args:
-      base_url:
-      token:
+      base_url: https://magento.test/rest
+      token: qj6csbaydfuqvzds9lypkibpfxl8621d
     class: MagentoConnector
     labels:
       base_url: Base URL
       token: Access Token
   woo:
     args:
-      base_url:
-      wq_password:
-      wq_username:
+      base_url: http://localhost:8000/
+      wq_password: oVvY wL2n XrIs 27ke VJug HVhJ
+      wq_username: leducmanh0838@gmail.com
     class: WooCommerceConnector
     labels:
       base_url: Base URL
-      wq_password: WordPress Password
-      wq_username: WordPress Username
+      wq_password: WordPress Username
+      wq_username: WordPress Password
+current_migration_id: 4

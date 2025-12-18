@@ -58,6 +58,18 @@ class MagentoConnector(BaseReadConnector):
         is_load_more = (page * page_size) < total_count
         return items, is_load_more
 
+    def _get_entity_count_in_magento(self, endpoint, **kwargs) -> int:
+        params = {
+            "searchCriteria[pageSize]": 1,
+            "searchCriteria[currentPage]": 1,
+        }
+
+        if kwargs:
+            params.update(kwargs)
+
+        response_data = self._make_request("GET", endpoint, params=params)
+        return response_data.get("total_count", 0)
+
     def get_product_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "products"
         return self._get_entities_in_magento(endpoint, **kwargs)
@@ -73,3 +85,19 @@ class MagentoConnector(BaseReadConnector):
     def get_order_batch(self, **kwargs) -> Tuple[List, bool]:
         endpoint = "orders"
         return self._get_entities_in_magento(endpoint, **kwargs)
+
+    def get_product_count(self, **kwargs) -> int:
+        endpoint = "products"
+        return self._get_entity_count_in_magento(endpoint, **kwargs)
+
+    def get_category_count(self, **kwargs) -> int:
+        endpoint = "categories/list"
+        return self._get_entity_count_in_magento(endpoint, **kwargs)
+
+    def get_customer_count(self, **kwargs) -> int:
+        endpoint = "customers/search"
+        return self._get_entity_count_in_magento(endpoint, **kwargs)
+
+    def get_order_count(self, **kwargs) -> int:
+        endpoint = "orders"
+        return self._get_entity_count_in_magento(endpoint, **kwargs)

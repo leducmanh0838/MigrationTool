@@ -3,16 +3,27 @@ from pathlib import Path
 import typer
 import yaml
 
+from src.connectors.abstract.base_connector import BaseConnector
 from src.utils.yaml_lookup import CONNECTOR_CLASSES
 
 
-def update_connector_args(source_config, new_args):
-    if connector_name in data['connectors']:
-        # Dùng .update() để cập nhật nhiều giá trị cùng lúc
-        data['connectors'][connector_name]['args'].update(new_args)
-        print(f"Đã cập nhật xong cho {connector_name}")
-    else:
-        print("Không tìm thấy connector này")
+def config_connector_cli_settings(platform_name, config, path):
+    platform_config = validate_connector(platform_name, config)
+    constructor_args = platform_config.get('args')
+    labels = platform_config.get('labels')
+    for key, value in constructor_args.items():
+        new_value = typer.prompt(f"{labels.get(key)}", hide_input=True)
+        config['connectors'][platform_name]['args'][key] = new_value
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(config, f, default_flow_style=False)
+    typer.secho(f"Configuration for {platform_name} has been updated.", fg="green")
+
+
+def config_migration_cli_settings(migration_id, config, path):
+    config['current_migration_id'] = migration_id
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(config, f, default_flow_style=False)
+    typer.secho(f"Migration ID: {migration_id}.", fg="green")
 
 
 def validate_connector(name: str, config: dict):
@@ -30,13 +41,11 @@ def validate_connector(name: str, config: dict):
     return connector_cfg
 
 
-def apply_connector(platform_name, config, path):
+def apply_connector(platform_name, config, path) -> BaseConnector:
     platform_config = validate_connector(platform_name, config)
     connector_class_name = platform_config.get('class')
     constructor_args = platform_config.get('args')
     labels = platform_config.get('labels')
-
-    # for key, value in sinh_vien.items():
 
     for key, value in constructor_args.items():
         if not value:
@@ -46,21 +55,27 @@ def apply_connector(platform_name, config, path):
                 bold=True
             )
             raise typer.Exit(code=1)
-            # new_value = typer.prompt(f"{labels.get(key)}", hide_input=True)
-            # config['connectors'][platform_name]['args'][key] = new_value
-            # with open(path, "w", encoding="utf-8") as f:
-            #     yaml.dump(config, f, default_flow_style=False)
 
-    # def load_cli_settings(config_path: Path):
-    #     """Đọc file YAML và trả về dict"""
-    #     if config_path.exists():
-    #         with open(config_path, "r", encoding="utf-8") as f:
-    #             return yaml.safe_load(f) or {}
-    #     return {}
-    # connector_class = CONNECTOR_CLASSES.get(connector_class_name)
-    # if connector_class:
-    #     connector_instance = connector_class(**constructor_args)
-    #     print(f"Đã tạo: {type(connector_instance)}")
+    connector_class = CONNECTOR_CLASSES.get(connector_class_name)
+    if not connector_class:
+        typer.echo(f"{connector_class.__name__} does not exist")
+        raise typer.Exit(code=1)
+    if not issubclass(connector_class, BaseConnector):
+        typer.echo(f"{connector_class.__name__} must inherit from BaseConnector")
+        raise typer.Exit(code=1)
+        # raise TypeError(f"{connector_class.__name__} phải kế thừa từ BaseConnector")
+    connector_instance = connector_class(**constructor_args)
+    is_success, message = connector_instance.check_connection()
+    if is_success:
+        typer.secho(f"Connected to {platform_name} successfully", fg="green")
+    else:
+        typer.secho(
+            f"Connection to {platform_name} failed: {message}",
+            fg=typer.colors.RED,
+            bold=True
+        )
+        raise typer.Exit(code=1)
+    return connector_instance
 
 
 def load_cli_settings(config_path: Path):
@@ -98,7 +113,6 @@ def config_platform_key(platform: str, config: dict, config_path: Path):
         # Nếu chưa có giá trị hoặc giá trị là chuỗi rỗng
         if not current_value or str(current_value).strip() == "":
             prompt_label = "API Key" if field == "key" else "API Secret"
-            # print("platform_upper: ", platform_upper)
             new_value = typer.prompt(f"Config {prompt_label} for {platform_upper}", hide_input=True)
 
             # Xử lý: Nếu người dùng để trống -> gán None (null trong YAML)

@@ -21,11 +21,8 @@ class EntityMigrationMapper:
 
     def to_record_target(self, source_record: Dict[str, Any], context=None) -> Dict[str, Any]:
         target_data: Dict[str, Any] = {}
-        print('source_data: ', json.dumps(source_record, indent=4))
 
         for target_field, jmes_query in self.field_mappings.items():
-            # print("target_field: ", target_field)
-            # Thực thi JMESPath Query
             value = jmespath.search(jmes_query, source_record)
             if value is None:
                 continue
@@ -35,12 +32,9 @@ class EntityMigrationMapper:
                                                              source_record=source_record,
                                                              context=context)
                 func = mapper_utils.get_func_by_func_config(func_config, TRANSFORMER_FUNCTIONS)
-                # print("params: ", params)
                 value = func(**params)
 
             target_data[target_field] = value
-        # print('target_data before unflatten_json: ', json.dumps(target_data, indent=4))
-        # print('END target_data before unflatten_json: ')
         target_data = mapper_utils.unflatten_json(target_data)
         return target_data
 
@@ -54,47 +48,20 @@ class EntityMigrationMapper:
                 func = mapper_utils.get_func_by_func_config(func_config, VALIDATOR_FUNCTIONS)
                 is_valid = func(**params)
                 if not is_valid:
-                    print(
-                        f"Xác thực thất bại cho trường '{source_field}' với quy tắc '{func_config.get('function_name')}'. Lỗi")
-
                     if on_fail == 'skip_record':
-                        # Bỏ qua toàn bộ bản ghi này
-                        print("Hành động: Bỏ qua bản ghi.")
                         return False, source_record
 
                     elif on_fail == 'log_warning':
-                        # Chỉ ghi log cảnh báo và tiếp tục
-                        print("Hành động: Ghi cảnh báo và tiếp tục.")
-                        continue  # Chuyển sang quy tắc tiếp theo hoặc trường tiếp theo
+                        continue
 
                     elif on_fail == 'set_to_default':
-                        # Đặt lại giá trị của trường về giá trị mặc định
-                        print(f"Hành động: Đặt giá trị mặc định '{default_value}'.")
                         source_record[source_field] = default_value
-                        value = default_value  # Cập nhật giá trị để các quy tắc sau sử dụng giá trị mới
-                        # Vẫn cần kiểm tra lại (Tùy logic: một số người sẽ dừng và coi giá trị mới là hợp lệ,
-                        # một số sẽ tiếp tục chạy các quy tắc khác trên giá trị mặc định)
 
                     elif on_fail == 'truncate_value':
-                        # Cắt bớt giá trị (dùng cho is_max_value)
                         max_value = params.get('max_value')
                         if max_value is not None:
-                            print(f"Hành động: Cắt bớt giá trị về {max_value}.")
                             source_record[source_field] = max_value
-                            value = max_value
-                        else:
-                            print("Lỗi: 'truncate_value' được gọi nhưng không có 'max_value'.")
         return True, source_record
-
-    # def post_process(self, source_record=None, created_target_record=None, context=None):
-    #     # mapper_utils.post_process_util(self.post_processors_config, global_context=global_context)
-    #     for func_config in self.post_processors_config:
-    #         params = mapper_utils.resolve_dynamic_params(func_config=func_config,
-    #                                                      source_record=source_record,
-    #                                                      created_target_record=created_target_record,
-    #                                                      context=context)
-    #         func = mapper_utils.get_func_by_func_config(func_config, POST_PROCESSOR_FUNCTIONS)
-    #         func(**params)
 
 if __name__ == '__main__':
     mapper = EntityMigrationMapper("magento", "woo", "category")

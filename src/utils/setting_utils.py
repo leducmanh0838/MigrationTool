@@ -40,5 +40,6 @@ def load_yaml_mappings(current_path, target_dict):
                     target_dict[key_name] = data if data is not None else {}
 
             except Exception as e:
-                print(f"Lỗi khi đọc file YAML {item_path}: {e}")
+                pass
+                # print(f"Lỗi khi đọc file YAML {item_path}: {e}")
                 # Có thể chọn bỏ qua hoặc thoát tùy vào yêu cầu của hệ thống

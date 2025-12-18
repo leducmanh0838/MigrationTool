@@ -10,7 +10,6 @@ def not_null(value, **kwargs):
     Kiểm tra giá trị có tồn tại (không phải None, không phải chuỗi rỗng) không.
     Thường áp dụng cho các trường bắt buộc.
     """
-    print("validate not_null")
     if value is None:
         return False
     if isinstance(value, str) and not value.strip():
@@ -20,7 +19,6 @@ def not_null(value, **kwargs):
 
 
 def is_not_self_referencing(parent_id, current_id):
-    print("is_not_self_referencing")
     return parent_id != current_id
 
 
@@ -31,7 +29,6 @@ def is_string_min_length(value, min_length, **kwargs):
     Kiểm tra độ dài chuỗi có đạt mức tối thiểu không.
     Tham số: min_length (được truyền từ YAML params)
     """
-    print("validate is_string_min_length")
     if not isinstance(value, str):
         # Nếu không phải chuỗi, coi là không hợp lệ cho quy tắc này
         return False
@@ -44,7 +41,6 @@ def is_string_max_length(value, max_length, **kwargs):
     Kiểm tra độ dài chuỗi có vượt quá mức tối đa không.
     Tham số: max_length
     """
-    print("validate is_string_max_length")
     if not isinstance(value, str):
         return True  # Nếu không phải chuỗi, coi là hợp lệ (hoặc False tùy logic mong muốn)
 
@@ -57,7 +53,6 @@ def is_integer(value, **kwargs):
     """
     Kiểm tra xem giá trị có thể chuyển đổi an toàn thành số nguyên không.
     """
-    print("validate is_integer")
     if isinstance(value, int):
         return True
 
@@ -76,7 +71,6 @@ def is_non_negative_integer(value, **kwargs):
     """
     Kiểm tra xem giá trị có phải là số nguyên không âm (>= 0) không.
     """
-    print("validate is_non_negative_integer")
     if not is_integer(value):
         return False
 
@@ -93,7 +87,6 @@ def is_max_value(value, max_value, **kwargs):
     Kiểm tra xem giá trị số có nhỏ hơn hoặc bằng giá trị tối đa không.
     Tham số: max_value
     """
-    print("validate is_max_value")
     # Chỉ hoạt động với các loại dữ liệu số
     if not isinstance(value, numbers.Number):
         # Nếu giá trị không phải số, hãy thử chuyển đổi nếu nó là chuỗi số
@@ -114,7 +107,6 @@ def is_valid_email(value, **kwargs):
     """
     Kiểm tra định dạng email cơ bản. (Cần thư viện regex trong thực tế)
     """
-    print("validate is_valid_email")
     if not isinstance(value, str):
         return False
 

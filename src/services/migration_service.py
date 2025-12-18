@@ -12,22 +12,25 @@ from src.database.dao.id_mapping_dao import IdMappingDAO
 from src.database.dao.migration_dao import MigrationDAO
 from src.database.session import get_db
 from src.mappers.entity_migration_mapper import EntityMigrationMapper
+from src.ui_handlers.abstract.base_migration_ui_handler import BaseMigrationUIHandler
 
 
 class MigrationService:
     def __init__(self, write_connector: BaseWriteConnector, read_connector: BaseReadConnector,
                  migration_id=None,
-                 migration_path: list = None):
+                 migration_path=None, ui_handler: BaseMigrationUIHandler = None):
         # 1. Kiểm tra ràng buộc: Chỉ cho phép truyền 1 trong 2
-        if (migration_id is not None) and (migration_path is not None):
-            raise ValueError("Chỉ được truyền 'migration_id' HOẶC 'migration_path', không được truyền cả hai.")
-
-        if (migration_id is None) and (migration_path is None):
-            raise ValueError("Phải truyền ít nhất 'migration_id' hoặc 'migration_path'.")
+        if migration_id:
+            migration_path = None
+        elif migration_path is None:
+            migration_path = ['category', 'product', 'customer', 'order']
 
         # self.migration_path = migration_path
+        self.ui_handler = ui_handler or BaseMigrationUIHandler()
+
         self.source = read_connector.get_platform_name()
         self.target = write_connector.get_platform_name()
+
         self.write_connector = write_connector
         self.read_connector = read_connector
 
@@ -57,7 +60,15 @@ class MigrationService:
         }
 
     def run_migration(self):
-
+        self.ui_handler.info("Start migrate...")
+        with get_db() as db:
+            dao = MigrationDAO(db)
+            migration = dao.get_by_id(
+                id=self.migration_id,
+            )
+            if migration.is_completed:
+                self.ui_handler.success("The data has been migrated.")
+                return
         # 1. Khởi tạo Dữ liệu/Service cho phiên chạy mới
         migration_context = {
             "migration_id": self.migration_id,
@@ -66,8 +77,13 @@ class MigrationService:
         if self.checkpoint_source_entity_name and self.checkpoint_source_entity_name in self.migration_path:
             idx = self.migration_path.index(self.checkpoint_source_entity_name)
             self.migration_path = self.migration_path[idx:]
+            self.ui_handler.info(
+                f"Check point: \n\t-Entity name: {self.checkpoint_source_entity_name}"
+                f"\n\t-Entity Page: {self.checkpoint_source_entity_page}"
+            )
 
         for entity in self.migration_path:
+            entity_count = self.read_connector.get_entity_count(entity)
             is_load_more = True
             current_page = 1
             if entity == self.checkpoint_source_entity_name:
@@ -83,6 +99,16 @@ class MigrationService:
                         checkpoint_source_entity_page=current_page,
                         checkpoint_source_entity_name=entity,
                     )
+                self.ui_handler.success(
+                    "success"
+                )
+
+        with get_db() as db:
+            dao = MigrationDAO(db)
+            dao.update_record(
+                id=self.migration_id,
+                is_completed=True,
+            )
 
     def _migrate_data_batch(self, entity, current_page, migration_context) -> bool:
         entity_source_data, is_load_more = self.read_connector.get_entity_batch(entity, page=current_page)
@@ -142,11 +168,19 @@ if __name__ == "__main__":
     # data, is_load_more = magento_connector.get_entity_batch("customer", page_size=30, page=2)
 
     magento_connector = MagentoConnector(MagentoConfig.BASE_URL, token=MagentoConfig.ACCESS_TOKEN)
-
+    # print(magento_connector.get_entity_batch("product"))
+    print(magento_connector.get_entity_count("product"))
+    print(magento_connector.get_entity_count("category"))
+    print(magento_connector.get_entity_count("customer"))
+    print(magento_connector.get_entity_count("order"))
+    #       base_url: http://localhost:8000/
+    #       wq_password: leducmanh0838@gmail.com
+    #       wq_username: oVvY wL2n XrIs 27ke VJug HVhJ
     woo_connector = WooCommerceConnector(WordPressConfig.BASE_URL, WordPressConfig.USERNAME,
                                          WordPressConfig.PASSWORD)
 
-    a, b = woo_connector.check_connection()
+    # a, b = woo_connector.check_connection()
+    # print(a, b)
     # service = MigrationService(
     #     # schema_mapper=schema_manager,
     #     migration_path=['category', 'product', 'customer', 'order'],

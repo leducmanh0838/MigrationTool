@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint, TEXT, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint, TEXT, Text, ForeignKey, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()  # Base class cho các model
@@ -14,6 +14,8 @@ class Migration(Base):
 
     checkpoint_source_entity_page = Column(Integer, nullable=True)
     checkpoint_source_entity_name = Column(String(50), nullable=True)
+
+    is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
 
     def __str__(self):
