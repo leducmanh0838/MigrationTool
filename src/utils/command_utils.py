@@ -23,7 +23,8 @@ def config_migration_cli_settings(migration_id, config, path):
     config['current_migration_id'] = migration_id
     with open(path, "w", encoding="utf-8") as f:
         yaml.dump(config, f, default_flow_style=False)
-    typer.secho(f"Migration ID: {migration_id}.", fg="green")
+    if migration_id:
+        typer.secho(f"Migration ID: {migration_id}.", fg="green")
 
 
 def validate_connector(name: str, config: dict):

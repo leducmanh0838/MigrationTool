@@ -35,6 +35,10 @@ class BaseWriteConnector(BaseConnector, ABC):
     def send_reset_password_email(self, email):
         pass
 
+    @abstractmethod
+    def delete_items_in_batches(self, entity_name, ids):
+        pass
+
     def create_entity(self, entity_name: str, data):
         # Lấy hàm tương ứng ra
         entity_callable = self.entity_callables.get(entity_name)

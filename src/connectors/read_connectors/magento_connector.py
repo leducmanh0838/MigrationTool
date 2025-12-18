@@ -5,6 +5,7 @@ from requests import RequestException
 
 from config.settings import AppConfig
 from src.connectors.abstract.base_read_connector import BaseReadConnector
+from datetime import datetime
 
 
 # from src.models.magento_data_types import MagentoCategorySummaryData
@@ -14,6 +15,11 @@ class MagentoConnector(BaseReadConnector):
     def __init__(self, base_url: str, token: str = None, api_version='V1'):
         base_api_url = f"{base_url.rstrip('/')}/{api_version.rstrip('/')}/"  # https://magento.test/rest/V1/
         super().__init__(base_api_url, token)
+
+    def _format_date(self, dt):
+        if isinstance(dt, datetime):
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dt
 
     def check_connection(self) -> Tuple[bool, str | None]:
         endpoint = "store/storeConfigs"
@@ -40,14 +46,35 @@ class MagentoConnector(BaseReadConnector):
     def get_platform_name(self):
         return "magento"
 
-    def _get_entities_in_magento(self, endpoint, page=1, page_size=100, sort_field="entity_id", sort_dir="ASC",
+    def _get_entities_in_magento(self, endpoint, page=1, page_size=5,
+                                 sort_field="entity_id", sort_dir="ASC",
+                                 updated_at_from=None, updated_at_to=None,
                                  **kwargs) -> Tuple[List, bool]:
+        # Khởi tạo params cơ bản
         params = {
             "searchCriteria[pageSize]": page_size,
             "searchCriteria[currentPage]": page,
             "searchCriteria[sortOrders][0][field]": sort_field,
             "searchCriteria[sortOrders][0][direction]": sort_dir
         }
+
+        # index để theo dõi filter_groups (tránh ghi đè nếu sau này bạn thêm filter khác)
+        filter_idx = 0
+
+        # Thêm lọc: updated_at > updated_at_from
+        if updated_at_from:
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][field]"] = "updated_at"
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][value]"] = self._format_date(
+                updated_at_from)
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][condition_type]"] = "gt"
+            filter_idx += 1
+
+        # Thêm lọc: updated_at <= updated_at_to
+        if updated_at_to:
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][field]"] = "updated_at"
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][value]"] = self._format_date(updated_at_to)
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][condition_type]"] = "lteq"
+            filter_idx += 1
 
         if kwargs:
             params.update(kwargs)
@@ -58,11 +85,28 @@ class MagentoConnector(BaseReadConnector):
         is_load_more = (page * page_size) < total_count
         return items, is_load_more
 
-    def _get_entity_count_in_magento(self, endpoint, **kwargs) -> int:
+    def _get_entity_count_in_magento(self, endpoint, updated_at_from=None, updated_at_to=None, **kwargs) -> int:
         params = {
             "searchCriteria[pageSize]": 1,
             "searchCriteria[currentPage]": 1,
         }
+
+        filter_idx = 0
+
+        # Thêm lọc: updated_at > updated_at_from
+        if updated_at_from:
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][field]"] = "updated_at"
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][value]"] = self._format_date(
+                updated_at_from)
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][condition_type]"] = "gt"
+            filter_idx += 1
+
+        # Thêm lọc: updated_at <= updated_at_to
+        if updated_at_to:
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][field]"] = "updated_at"
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][value]"] = self._format_date(updated_at_to)
+            params[f"searchCriteria[filter_groups][{filter_idx}][filters][0][condition_type]"] = "lteq"
+            filter_idx += 1
 
         if kwargs:
             params.update(kwargs)

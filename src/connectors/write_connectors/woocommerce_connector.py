@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Tuple
 
 import requests
@@ -14,6 +15,12 @@ class WooCommerceConnector(BaseWriteConnector):
         base_api_url = f"{base_url.rstrip('/')}{api_path.rstrip('/')}/{api_version.rstrip('/')}/"
         super().__init__(base_api_url)
         self.auth = (wq_username, wq_password)
+        self.endpoints = {
+            "product": "products",
+            "category": "products/categories",
+            "customer": "customers",
+            "order": "orders",
+        }
 
     def check_connection(self) -> Tuple[bool, str | None]:
         endpoint = "system_status"
@@ -43,26 +50,14 @@ class WooCommerceConnector(BaseWriteConnector):
         return "woo"
 
     def create_product(self, product_data):
-        """
-        Tạo sản phẩm mới trên Woo
-        Endpoint: /wp-json/wc/v3/products
-        """
         endpoint = "products"
         return self._make_request("POST", endpoint, data=product_data, auth=self.auth)
 
     def create_category(self, category_data):
-        """
-        Tạo thể loại mới trên Woo
-        Endpoint: /wp-json/wc/v3/products/categories
-        """
         endpoint = "products/categories"
         return self._make_request("POST", endpoint, data=category_data, auth=self.auth)
 
     def create_customer(self, customer_data):
-        """
-        Tạo thể loại mới trên Woo
-        Endpoint: /wp-json/wc/v3/products/categories
-        """
         endpoint = "customers"
         return self._make_request("POST", endpoint, data=customer_data, auth=self.auth)
 
@@ -74,9 +69,33 @@ class WooCommerceConnector(BaseWriteConnector):
             json={"email": email})
 
     def create_order(self, order_data):
-        """
-        Tạo thể loại mới trên Woo
-        Endpoint: /wp-json/wc/v3/products/categories
-        """
         endpoint = "orders"
         return self._make_request("POST", endpoint, data=order_data, auth=self.auth)
+
+    def delete_items_in_batches(self, entity_name, ids):
+        if not ids:
+            return
+        batch_size = 50
+        deleted_count = 0
+        total_to_delete = len(ids)
+        for i in range(0, total_to_delete, batch_size):
+            batch = ids[i:i + batch_size]
+            params = {
+                "force": "true",
+            }
+            data = {
+                "delete": batch
+            }
+
+            try:
+                response = self._make_request('POST', f"{self.endpoints.get(entity_name)}/batch", data=data, auth=self.auth,
+                                              params=params)
+
+                logging.info(f"Đã xóa thành công lô #{i // batch_size + 1}")
+
+            except Exception as e:
+                logging.error(f"Lỗi nghiêm trọng trong quá trình xóa lô: {e}")
+                break
+
+        logging.info(f"--- HOÀN TẤT QUÁ TRÌNH XÓA ---")
+        logging.info(f"Tổng cộng đã xóa thành công {deleted_count} thể loại.")

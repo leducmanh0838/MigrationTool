@@ -361,8 +361,8 @@ def main():
 
 if __name__ == "__main__":
     wcapi = initialize_wcapi()
-    # endpoints = ["products", "products/categories", "customers", "orders"]
-    endpoints = ["products/categories"]
+    endpoints = ["products", "products/categories", "customers", "orders"]
+    # endpoints = ["products/categories"]
     # endpoints = ["orders"]
     for endpoint in endpoints:
         ids = get_all_entity_ids(wcapi, endpoint)

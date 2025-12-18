@@ -14,6 +14,7 @@ class Migration(Base):
 
     checkpoint_source_entity_page = Column(Integer, nullable=True)
     checkpoint_source_entity_name = Column(String(50), nullable=True)
+    checkpoint_source_updated_at = Column(DateTime(timezone=True), nullable=True)
 
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
@@ -75,6 +76,8 @@ if __name__ == '__main__':
     Base.metadata.create_all(engine)  # Tạo các bảng nếu chúng chưa tồn tại
 """
 docker exec -it migration_mysql_db mysql -u root -p
+
+my_root_password_123
 
 SHOW DATABASES;
 

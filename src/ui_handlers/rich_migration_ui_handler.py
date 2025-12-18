@@ -12,19 +12,19 @@ class RichMigrationUIHandler(BaseMigrationUIHandler):
         self.console = console
 
     def info(self, message: str):
-        self.console.print(f"[bold blue]🔹 INFO:[/bold blue] {message}")
+        self.console.print(f"[bold blue]INFO:[/bold blue] {message}")
 
     def success(self, message: str):
-        self.console.print(f"[bold green]✅ SUCCESS:[/bold green] {message}")
+        self.console.print(f"[bold green]SUCCESS:[/bold green] {message}")
 
     def warning(self, message: str):
-        self.console.print(f"[bold yellow]⚠️  WARNING:[/bold yellow] {message}")
+        self.console.print(f"[bold yellow]WARNING:[/bold yellow] {message}")
 
     def error(self, message: str, error_detail: str = ""):
         content = f"[bold white]{message}[/bold white]"
         if error_detail:
             content += f"\n[dim]Detail: {error_detail}[/dim]"
-        self.console.print(Panel(content, title="[bold red]✘ ERROR[/bold red]", border_style="red"))
+        self.console.print(Panel(content, title="[bold red]ERROR[/bold red]", border_style="red"))
 
     def track_progress(self, name: str, total: int):
         # Trả về một đối tượng Progress của Rich để quản lý việc render thanh tiến trình

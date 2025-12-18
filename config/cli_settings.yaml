@@ -17,4 +17,4 @@ connectors:
       base_url: Base URL
       wq_password: WordPress Username
       wq_username: WordPress Password
-current_migration_id: 4
+current_migration_id: 3
