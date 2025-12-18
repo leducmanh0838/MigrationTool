@@ -1,3 +1,5 @@
+from src.connectors.read_connectors.magento_connector import MagentoConnector
+from src.connectors.write_connectors.woocommerce_connector import WooCommerceConnector
 from src.utils import validators, transformers, processors
 
 POST_PROCESSOR_FUNCTIONS = {
@@ -26,4 +28,9 @@ VALIDATOR_FUNCTIONS = {
     'is_non_negative_integer': validators.is_non_negative_integer,
     'is_max_value': validators.is_max_value,
     'is_valid_email': validators.is_valid_email,
+}
+
+CONNECTOR_CLASSES = {
+    'MagentoConnector': MagentoConnector,
+    'WooCommerceConnector': WooCommerceConnector,
 }

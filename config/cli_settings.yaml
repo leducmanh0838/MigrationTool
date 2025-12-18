@@ -1,2 +1,19 @@
-magento_key: ABCXD
-woo_key: Test
+connectors:
+  magento:
+    args:
+      base_url:
+      token:
+    class: MagentoConnector
+    labels:
+      base_url: Base URL
+      token: Access Token
+  woo:
+    args:
+      base_url:
+      wq_password:
+      wq_username:
+    class: WooCommerceConnector
+    labels:
+      base_url: Base URL
+      wq_password: WordPress Password
+      wq_username: WordPress Username

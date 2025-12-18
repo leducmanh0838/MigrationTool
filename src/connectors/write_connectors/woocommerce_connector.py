@@ -14,10 +14,6 @@ class WooCommerceConnector(BaseWriteConnector):
         base_api_url = f"{base_url.rstrip('/')}{api_path.rstrip('/')}/{api_version.rstrip('/')}/"
         super().__init__(base_api_url)
         self.auth = (wq_username, wq_password)
-        # self.entity_callables = {
-        #     "product": self.create_product,
-        #     "category": self.create_category,
-        # }
 
     def check_connection(self) -> Tuple[bool, str | None]:
         endpoint = "system_status"
@@ -84,19 +80,3 @@ class WooCommerceConnector(BaseWriteConnector):
         """
         endpoint = "orders"
         return self._make_request("POST", endpoint, data=order_data, auth=self.auth)
-    #
-    # def get_products(self):
-    #     endpoint = "products"
-    #     return self._make_request("GET", endpoint)
-
-    # def create_entity(self, entity_name: str, data):
-    #     # Lấy hàm tương ứng ra
-    #     entity_callable = self.entity_callables.get(entity_name)
-    #
-    #     # Cải tiến 1: Kiểm tra sự tồn tại của hàm
-    #     if not entity_callable:
-    #         raise ValueError(f"Entity '{entity_name}' is not supported for creation by WooCommerceConnector.")
-    #
-    #     # Cải tiến 2: Gọi hàm đã được kiểm tra
-    #     # Dòng này hoạt động tốt vì cả create_product và create_category đều nhận tham số 'data'
-    #     return entity_callable(data)

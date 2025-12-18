@@ -25,12 +25,13 @@ class AppConfig:
     # Nếu ở môi trường production, LUÔN LUÔN phải bật xác minh SSL (True)
     VERIFY_SSL = not DEBUG_MODE  # True nếu không phải DEBUG_MODE (tức là True khi PROD)
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
-    YAML_MAPPINGS_DIR = PROJECT_ROOT / 'yaml_mappings' / 'entity_definitions'
-    YAML_TRANSFORMATION_CONFIGS_DIR = PROJECT_ROOT / 'yaml_mappings' / 'value_mappings'
+    YAML_MAPPINGS_DIR = PROJECT_ROOT / 'config' / 'yaml_mappings' / 'entity_definitions'
+    YAML_TRANSFORMATION_CONFIGS_DIR = PROJECT_ROOT / 'config' / 'yaml_mappings' / 'value_mappings'
     # module_name = f"src.utils.data_transformers"
     DATA_TRANSFORMER_PATH = 'src.mappers.data_mappers.data_transformers'
     DATA_VALIDATORS_PATH = 'src.mappers.data_mappers.data_validators'
     SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:my_root_password_123@localhost:3307/migration_db"
+    DEFAULT_CLI_VARIABLE_PATH = PROJECT_ROOT / 'config' / 'cli_settings.yaml'
 
 
 # --- CẤU HÌNH MAGENTO (SOURCE) ---

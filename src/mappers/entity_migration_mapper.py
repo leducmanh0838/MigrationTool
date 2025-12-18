@@ -4,7 +4,7 @@ from typing import Dict, Any
 import jmespath
 
 from config.settings import YamlValueConfig
-from src.utils.function_registry import VALIDATOR_FUNCTIONS, TRANSFORMER_FUNCTIONS, POST_PROCESSOR_FUNCTIONS
+from src.utils.yaml_lookup import VALIDATOR_FUNCTIONS, TRANSFORMER_FUNCTIONS, POST_PROCESSOR_FUNCTIONS
 from src.utils import mapper_utils
 
 
