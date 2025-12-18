@@ -83,7 +83,6 @@ class WooCommerceConnector(BaseWriteConnector):
         Endpoint: /wp-json/wc/v3/products/categories
         """
         endpoint = "orders"
-        print("order_data: ", json.dumps(order_data, indent=4))
         return self._make_request("POST", endpoint, data=order_data, auth=self.auth)
     #
     # def get_products(self):

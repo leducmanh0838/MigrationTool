@@ -56,13 +56,9 @@ class BaseConnector(ABC):
 
             except requests.exceptions.HTTPError as e:
                 # BẮT VÀ RAISE LẠI HTTPError (từ 400-410, 412-428, 430-499)\
-                print('requests.exceptions.HTTPError ')
-                logging.error(f"Request failed (HTTP Error, không thử lại): {e}")
                 raise e
 
             except requests.exceptions.RequestException as e:
-                print('requests.exceptions.RequestException ')
-                logging.error(f"Request failed: {e}")
                 raise e
                 # attempt += 1
                 # time.sleep(2 ** attempt)
